@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PokeNOT - Monster Battle Adventure</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, 
+                #5DADE2 0%, 
+                #5DADE2 50%, 
+                #6DB3E8 50%, 
+                #6DB3E8 70%,
+                #5CB85C 70%,
+                #5CB85C 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Wasser Linie */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: repeating-linear-gradient(
+                90deg,
+                #4A90C2 0px,
+                #4A90C2 15px,
+                #5DADE2 15px,
+                #5DADE2 30px
+            );
+            z-index: 5;
+        }
+
+        /* Wolken */
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 50px;
+            opacity: 0.95;
+            z-index: 3;
+        }
+
+        .cloud::before,
+        .cloud::after {
+            content: '';
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+        }
+
+        .cloud::before {
+            width: 35px;
+            height: 35px;
+            top: -18px;
+            left: 10px;
+        }
+
+        .cloud::after {
+            width: 25px;
+            height: 25px;
+            top: -12px;
+            right: 15px;
+        }
+
+        .cloud1 {
+            width: 90px;
+            height: 25px;
+            top: 12%;
+            left: 8%;
+            animation: float 6s infinite;
+        }
+
+        .cloud2 {
+            width: 110px;
+            height: 30px;
+            top: 28%;
+            right: 6%;
+            animation: float 8s infinite reverse;
+        }
+
+        .cloud3 {
+            width: 80px;
+            height: 22px;
+            top: 62%;
+            left: 12%;
+            animation: float 7s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateX(0px); }
+            50% { transform: translateX(30px); }
+        }
+
+        /* Container */
+        .container {
+            display: flex;
+            gap: 50px;
+            padding: 20px;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+            margin-top: 80px;
+        }
+
+        /* Header */
+        .header {
+            position: absolute;
+            top: 40px;
+            text-align: center;
+            width: 100%;
+            z-index: 15;
+        }
+
+        .logo {
+            font-size: 72px;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 
+                4px 4px 0px #333333,
+                8px 8px 0px rgba(0,0,0,0.2),
+                -2px -2px 0px rgba(0,0,0,0.1);
+            letter-spacing: 4px;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 15px;
+            letter-spacing: 3px;
+            color: #2C3E50;
+            font-weight: bold;
+        }
+
+        /* Menu Box */
+        .menu-box {
+            background: #F5E6D3;
+            border: 5px solid #2C3E50;
+            border-radius: 25px;
+            padding: 45px;
+            width: 380px;
+            box-shadow: 
+                0 8px 16px rgba(0,0,0,0.4),
+                inset 0 2px 0px rgba(255,255,255,0.5);
+            position: relative;
+        }
+
+        /* Gestrichelte Linie */
+        .menu-box {
+            background-image: 
+                radial-gradient(circle, #D4A574 2px, transparent 2px);
+            background-size: 20px 20px;
+            background-position: 
+                -8px -8px,
+                12px 12px;
+        }
+
+        .menu-box::before {
+            content: '';
+            position: absolute;
+            top: -18px;
+            left: -18px;
+            right: -18px;
+            bottom: -18px;
+            border: 3px dashed #D4A574;
+            border-radius: 30px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .menu-box::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 5px solid #2C3E50;
+            border-radius: 25px;
+            pointer-events: none;
+        }
+
+        .menu-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .menu-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 35px;
+            color: #2C3E50;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .btn {
+            padding: 22px;
+            font-size: 20px;
+            font-weight: bold;
+            border: none;
+            border-radius: 18px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            box-shadow: 
+                0 8px 0 rgba(0,0,0,0.4),
+                0 10px 20px rgba(0,0,0,0.2);
+            transition: all 0.15s;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 
+                0 10px 0 rgba(0,0,0,0.4),
+                0 12px 24px rgba(0,0,0,0.2);
+        }
+
+        .btn:active {
+            transform: translateY(6px);
+            box-shadow: 
+                0 2px 0 rgba(0,0,0,0.4),
+                0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .btn-start {
+            background: linear-gradient(to bottom, #EF5350, #E53935);
+            border: 4px solid #C62828;
+        }
+
+        .btn-load {
+            background: linear-gradient(to bottom, #42A5F5, #1E88E5);
+            border: 4px solid #1565C0;
+        }
+
+        .btn-settings {
+            background: linear-gradient(to bottom, #66BB6A, #43A047);
+            border: 4px solid #2E7D32;
+        }
+
+        /* High Score Box */
+        .high-score-box {
+            background: #F5E6D3;
+            border: 5px solid #2C3E50;
+            border-radius: 20px;
+            padding: 28px;
+            width: 300px;
+            box-shadow: 
+                0 8px 16px rgba(0,0,0,0.4),
+                inset 0 2px 0px rgba(255,255,255,0.5);
+        }
+
+        .score-title {
+            text-align: center;
+            font-size: 17px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            color: #2C3E50;
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #D4A574;
+        }
+
+        .score-list {
+            list-style: none;
+        }
+
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            font-weight: bold;
+            color: #2C3E50;
+            font-size: 15px;
+            border-bottom: 1px solid #E8D7C3;
+        }
+
+        .score-item:last-child {
+            border-bottom: none;
+        }
+
+        .score-rank {
+            color: #8B6F47;
+            margin-right: 12px;
+            min-width: 25px;
+        }
+
+        .score-name {
+            flex: 1;
+            text-transform: uppercase;
+        }
+
+        .score-points {
+            color: #E74C3C;
+            font-weight: bold;
+            text-align: right;
+            min-width: 70px;
+        }
+
+        /* Footer */
+        .footer {
+            position: absolute;
+            bottom: 15px;
+            text-align: center;
+            width: 100%;
+            color: #B8D4A8;
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            z-index: 20;
+        }
+
+        .footer-authors {
+            margin-bottom: 3px;
+        }
+
+        .footer-version {
+            font-size: 11px;
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                flex-direction: column;
+                gap: 30px;
+                margin-top: 120px;
+            }
+
+            .header {
+                position: relative;
+                top: 0;
+                margin-bottom: 20px;
+            }
+
+            .logo {
+                font-size: 52px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Wolken -->
+    <div class="cloud cloud1"></div>
+    <div class="cloud cloud2"></div>
+    <div class="cloud cloud3"></div>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">PokeNOT</div>
+        <div class="subtitle">MONSTER BATTLE ADVENTURE</div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Menu Box -->
+        <div class="menu-box">
+            <div class="menu-content">
+                <div class="menu-title">CHOOSE YOUR<br>ADVENTURE</div>
+                <div class="button-group">
+                    <button class="btn btn-start">START</button>
+                    <button class="btn btn-load">LOAD GAME</button>
+                    <button class="btn btn-settings">SETTINGS</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- High Score Box -->
+        <div class="high-score-box">
+            <div class="score-title">HIGH SCORE</div>
+            <ul class="score-list">
+                <li class="score-item">
+                    <span class="score-rank">1.</span>
+                    <span class="score-name">LUNA</span>
+                    <span class="score-points">12,450</span>
+                </li>
+                <li class="score-item">
+                    <span class="score-rank">2.</span>
+                    <span class="score-name">MIKA</span>
+                    <span class="score-points">10,870</span>
+                </li>
+                <li class="score-item">
+                    <span class="score-rank">3.</span>
+                    <span class="score-name">REX</span>
+                    <span class="score-points">9,240</span>
+                </li>
+                <li class="score-item">
+                    <span class="score-rank">4.</span>
+                    <span class="score-name">NOVA</span>
+                    <span class="score-points">7,915</span>
+                </li>
+                <li class="score-item">
+                    <span class="score-rank">5.</span>
+                    <span class="score-name">YOU?</span>
+                    <span class="score-points">---</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="footer-authors">MADE BY PHILIP • MARIO • PAUL</div>
+        <div class="footer-version">A FIRST UI CONCEPT • v0.1</div>
+    </div>
+
+    <script>
+        // Button Funktionalität
+        document.querySelector('.btn-start').addEventListener('click', () => {
+            console.log('START Button geklickt');
+            alert('Spiel wird gestartet...');
+        });
+
+        document.querySelector('.btn-load').addEventListener('click', () => {
+            console.log('LOAD GAME Button geklickt');
+            alert('Spiel wird geladen...');
+        });
+
+        document.querySelector('.btn-settings').addEventListener('click', () => {
+            console.log('SETTINGS Button geklickt');
+            alert('Einstellungen öffnen...');
+        });
+    </script>
+</body>
+</html>
