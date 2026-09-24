@@ -8,6 +8,4 @@ function kundenAnzeigen(kunden) {
   });
 }
 
-//minor change
-
 kundenAnzeigen(daten.kunden);
