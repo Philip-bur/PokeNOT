@@ -13,13 +13,7 @@
 
         body {
             font-family: Arial, sans-serif;
-            background: linear-gradient(to bottom, 
-                #5DADE2 0%, 
-                #5DADE2 50%, 
-                #6DB3E8 50%, 
-                #6DB3E8 70%,
-                #5CB85C 70%,
-                #5CB85C 100%);
+            background: url('pokelike-background.png') center / cover no-repeat fixed;
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -30,25 +24,12 @@
 
         /* Wasser Linie */
         body::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 8px;
-            background: repeating-linear-gradient(
-                90deg,
-                #4A90C2 0px,
-                #4A90C2 15px,
-                #5DADE2 15px,
-                #5DADE2 30px
-            );
-            z-index: 5;
+            display: none;
         }
 
         /* Wolken */
         .cloud {
-            position: absolute;
+            display: none;
             background: white;
             border-radius: 50px;
             opacity: 0.95;
@@ -109,12 +90,13 @@
         /* Container */
         .container {
             display: flex;
-            gap: 50px;
-            padding: 20px;
+            width: 100%;
+            height: 100vh;
+            padding: 0;
+            justify-content: center;
             align-items: center;
             position: relative;
             z-index: 10;
-            margin-top: 80px;
         }
 
         /* Header */
@@ -136,6 +118,38 @@
                 -2px -2px 0px rgba(0,0,0,0.1);
             letter-spacing: 4px;
             margin-bottom: 8px;
+        }
+
+        .logo-pokeball {
+            display: inline-block;
+            width: 0.78em;
+            height: 0.78em;
+            margin: 0 0.02em;
+            position: relative;
+            vertical-align: -0.04em;
+            border: 0.06em solid #333333;
+            border-radius: 50%;
+            background: linear-gradient(
+                to bottom,
+                #EF5350 0 44%,
+                #333333 44% 56%,
+                #F5F5F5 56% 100%
+            );
+            box-shadow: 0.06em 0.06em 0 rgba(0,0,0,0.2);
+        }
+
+        .logo-pokeball::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0.23em;
+            height: 0.23em;
+            transform: translate(-50%, -50%);
+            border: 0.05em solid #333333;
+            border-radius: 50%;
+            background: #F5F5F5;
+            box-shadow: inset 0 0 0 0.04em #FFFFFF;
         }
 
         .subtitle {
@@ -249,11 +263,6 @@
             border: 4px solid #C62828;
         }
 
-        .btn-load {
-            background: linear-gradient(to bottom, #42A5F5, #1E88E5);
-            border: 4px solid #1565C0;
-        }
-
         .btn-settings {
             background: linear-gradient(to bottom, #66BB6A, #43A047);
             border: 4px solid #2E7D32;
@@ -266,6 +275,11 @@
             border-radius: 20px;
             padding: 28px;
             width: 300px;
+            height: auto;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            bottom: 20px;
             box-shadow: 
                 0 8px 16px rgba(0,0,0,0.4),
                 inset 0 2px 0px rgba(255,255,255,0.5);
@@ -335,15 +349,263 @@
             margin-bottom: 3px;
         }
 
-        .footer-version {
-            font-size: 11px;
+        /* Pokemon-Auswahl */
+        .pokemon-selection {
+            display: none;
+            position: fixed;
+            inset: 0;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            background: rgba(44, 62, 80, 0.72);
+            z-index: 30;
+        }
+
+        .pokemon-selection.is-visible {
+            display: flex;
+        }
+
+        .selection-box {
+            width: min(850px, 100%);
+            padding: 35px;
+            background: #F5E6D3;
+            border: 5px solid #2C3E50;
+            border-radius: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+            text-align: center;
+        }
+
+        .selection-title {
+            color: #2C3E50;
+            font-size: 26px;
+            margin-bottom: 8px;
+        }
+
+        .selection-subtitle {
+            color: #8B6F47;
+            font-weight: bold;
+            margin-bottom: 25px;
+        }
+
+        .pokemon-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+        }
+
+        .pokemon-option {
+            padding: 24px 12px;
+            border: 4px solid;
+            border-radius: 18px;
+            color: #2C3E50;
+            font: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .pokemon-option:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 7px 0 rgba(0,0,0,0.2);
+        }
+
+        .pokemon-option.fire {
+            background: #FADBD8;
+            border-color: #E74C3C;
+        }
+
+        .pokemon-option.water {
+            background: #D6EAF8;
+            border-color: #3498DB;
+        }
+
+        .pokemon-option.grass {
+            background: #D5F5E3;
+            border-color: #27AE60;
+        }
+
+        .pokemon-type {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 13px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .selection-close {
+            margin-top: 25px;
+            padding: 10px 22px;
+            border: 2px solid #2C3E50;
+            border-radius: 10px;
+            background: transparent;
+            color: #2C3E50;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Kampfansicht */
+        .battle-screen {
+            display: none;
+            position: fixed;
+            inset: 0;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            background: rgba(44, 62, 80, 0.72);
+            z-index: 30;
+        }
+
+        .battle-screen.is-visible {
+            display: flex;
+        }
+
+        .battle-box {
+            width: min(700px, 100%);
+            padding: 35px;
+            background: #F5E6D3;
+            border: 5px solid #2C3E50;
+            border-radius: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+            text-align: center;
+        }
+
+        .battle-title {
+            color: #2C3E50;
+            font-size: 26px;
+            margin-bottom: 25px;
+        }
+
+        .battle-pokemon {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .battle-card {
+            padding: 25px 12px;
+            border: 4px solid #2C3E50;
+            border-radius: 18px;
+            color: #2C3E50;
+            font-weight: bold;
+        }
+
+        .battle-card.fire {
+            background: #FADBD8;
+            border-color: #E74C3C;
+        }
+
+        .battle-card.water {
+            background: #D6EAF8;
+            border-color: #3498DB;
+        }
+
+        .battle-card.grass {
+            background: #D5F5E3;
+            border-color: #27AE60;
+        }
+
+        .battle-label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 13px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .battle-level {
+            display: block;
+            margin-top: 10px;
+            color: #8B6F47;
+        }
+
+        .health-bar {
+            height: 14px;
+            margin-top: 16px;
+            overflow: hidden;
+            border: 2px solid #2C3E50;
+            border-radius: 8px;
+            background: #E8D7C3;
+        }
+
+        .health-fill {
+            width: 100%;
+            height: 100%;
+            background: #5CB85C;
+            transition: width 0.25s ease;
+        }
+
+        .health-points {
+            display: block;
+            margin-top: 14px;
+            color: #2C3E50;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .battle-status {
+            min-height: 24px;
+            margin-top: 22px;
+            color: #2C3E50;
+            font-weight: bold;
+        }
+
+        .battle-versus {
+            color: #E74C3C;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .battle-actions {
+            margin-top: 28px;
+        }
+
+        .attack-actions {
+            display: flex;
+            justify-content: center;
+        }
+
+        .battle-actions button {
+            padding: 10px 18px;
+            border: 2px solid #2C3E50;
+            border-radius: 10px;
+            background: transparent;
+            color: #2C3E50;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .battle-menu-action {
+            margin-top: 16px;
+        }
+
+        .tackle-button {
+            background: #EF5350 !important;
+            color: white !important;
+            border-color: #C62828 !important;
+        }
+
+        .tackle-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.55;
         }
 
         @media (max-width: 900px) {
             .container {
                 flex-direction: column;
                 gap: 30px;
+                height: auto;
                 margin-top: 120px;
+            }
+
+            .high-score-box {
+                position: relative;
+                width: 300px;
+                height: auto;
+                top: auto;
+                right: auto;
+                bottom: auto;
+                border-radius: 20px;
             }
 
             .header {
@@ -354,6 +616,26 @@
 
             .logo {
                 font-size: 52px;
+            }
+
+            .selection-box {
+                padding: 25px 18px;
+            }
+
+            .pokemon-options {
+                grid-template-columns: 1fr;
+            }
+
+            .battle-pokemon {
+                grid-template-columns: 1fr;
+            }
+
+            .battle-versus {
+                order: 2;
+            }
+
+            .battle-card.opponent {
+                order: 3;
             }
         }
     </style>
@@ -366,7 +648,7 @@
 
     <!-- Header -->
     <div class="header">
-        <div class="logo">PokeNOT</div>
+        <div class="logo">PokeN<span class="logo-pokeball" role="img" aria-label="O"></span>T</div>
         <div class="subtitle">MONSTER BATTLE ADVENTURE</div>
     </div>
 
@@ -378,7 +660,6 @@
                 <div class="menu-title">CHOOSE YOUR<br>ADVENTURE</div>
                 <div class="button-group">
                     <button class="btn btn-start">START</button>
-                    <button class="btn btn-load">LOAD GAME</button>
                     <button class="btn btn-settings">SETTINGS</button>
                 </div>
             </div>
@@ -420,24 +701,288 @@
     <!-- Footer -->
     <div class="footer">
         <div class="footer-authors">MADE BY PHILIP • MARIO • PAUL</div>
-        <div class="footer-version">A FIRST UI CONCEPT • v0.1</div>
     </div>
 
-    <script>
-        // Button Funktionalität
-        document.querySelector('.btn-start').addEventListener('click', () => {
-            console.log('START Button geklickt');
-            alert('Spiel wird gestartet...');
-        });
+    <!-- Pokemon-Auswahl -->
+    <div class="pokemon-selection" role="dialog" aria-modal="true" aria-labelledby="selection-title">
+        <div class="selection-box">
+            <h2 class="selection-title" id="selection-title">WÄHLE DEIN POKÉMON</h2>
+            <p class="selection-subtitle">Ein Pokémon aus jedem Typ steht zur Auswahl.</p>
+            <div class="pokemon-options"></div>
+            <button class="selection-close" type="button">ZURÜCK</button>
+        </div>
+    </div>
 
-        document.querySelector('.btn-load').addEventListener('click', () => {
-            console.log('LOAD GAME Button geklickt');
-            alert('Spiel wird geladen...');
-        });
+    <!-- Kampfansicht -->
+    <div class="battle-screen" role="dialog" aria-modal="true" aria-labelledby="battle-title">
+        <div class="battle-box">
+            <h2 class="battle-title" id="battle-title">KAMPF BEGINNT!</h2>
+            <div class="battle-pokemon">
+                <div class="battle-card player">
+                    <span class="battle-label">DEIN POKÉMON</span>
+                    <span class="player-pokemon-name"></span>
+                    <span class="battle-level player-pokemon-level"></span>
+                    <span class="health-points player-health-points"></span>
+                    <div class="health-bar" aria-label="Lebenspunkte eigenes Pokémon">
+                        <div class="health-fill player-health-fill"></div>
+                    </div>
+                </div>
+                <span class="battle-versus">VS</span>
+                <div class="battle-card opponent">
+                    <span class="battle-label">GEGNER</span>
+                    <span class="opponent-pokemon-name"></span>
+                    <span class="battle-level opponent-pokemon-level"></span>
+                    <span class="health-points opponent-health-points"></span>
+                    <div class="health-bar" aria-label="Lebenspunkte Gegner">
+                        <div class="health-fill opponent-health-fill"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="battle-status">Du bist dran!</div>
+            <div class="battle-actions">
+                <div class="attack-actions">
+                    <button class="tackle-button" type="button">TACKLE</button>
+                </div>
+                <div class="battle-menu-action">
+                    <button class="battle-close" type="button">ZURÜCK ZUM MENÜ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        const pokemonPool = {
+            Feuer: ['Feurigel', 'Panflam', 'Glumanda'],
+            Wasser: ['Ottoro', 'Shiggy', 'Froxy'],
+            Pflanze: ['Bisasam', 'Felori', 'Bauz']
+        };
+
+        const pokemonSelection = document.querySelector('.pokemon-selection');
+        const pokemonOptions = document.querySelector('.pokemon-options');
+        const battleScreen = document.querySelector('.battle-screen');
+        const playerPokemonName = document.querySelector('.player-pokemon-name');
+        const playerPokemonLevel = document.querySelector('.player-pokemon-level');
+        const opponentPokemonName = document.querySelector('.opponent-pokemon-name');
+        const opponentPokemonLevel = document.querySelector('.opponent-pokemon-level');
+        const playerBattleCard = document.querySelector('.battle-card.player');
+        const opponentBattleCard = document.querySelector('.battle-card.opponent');
+        const playerHealthFill = document.querySelector('.player-health-fill');
+        const opponentHealthFill = document.querySelector('.opponent-health-fill');
+        const playerHealthPoints = document.querySelector('.player-health-points');
+        const opponentHealthPoints = document.querySelector('.opponent-health-points');
+        const battleStatus = document.querySelector('.battle-status');
+        const tackleButton = document.querySelector('.tackle-button');
+        const battleMessageDelay = 1200;
+        let playerPokemon = null;
+        let playerCombatant = null;
+        let opponentCombatant = null;
+        let opponentCount = 0;
+        let isPlayerTurn = true;
+
+        function getRandomPokemon(pokemon) {
+            return pokemon[Math.floor(Math.random() * pokemon.length)];
+        }
+
+        function getTypeClass(type) {
+            return type === 'Feuer' ? 'fire' : type === 'Wasser' ? 'water' : 'grass';
+        }
+
+        function getPokemonType(pokemonName) {
+            return Object.entries(pokemonPool)
+                .find(([, pokemon]) => pokemon.includes(pokemonName))[0];
+        }
+
+        function rollPokemonOptions() {
+            pokemonOptions.innerHTML = '';
+
+            Object.entries(pokemonPool).forEach(([type, pokemon]) => {
+                const option = document.createElement('button');
+                const typeClass = getTypeClass(type);
+                option.className = `pokemon-option ${typeClass}`;
+                option.type = 'button';
+                const pokemonName = getRandomPokemon(pokemon);
+                option.innerHTML = `<span class="pokemon-type">${type}</span>${pokemonName}`;
+                option.addEventListener('click', () => {
+                    playerPokemon = { name: pokemonName, type, level: 1 };
+                    playerCombatant = {
+                        type,
+                        level: 1,
+                        hp: 100,
+                        maxHp: 100
+                    };
+                    opponentCount = 0;
+                    rollPokemonOptions();
+                    pokemonSelection.classList.remove('is-visible');
+                    showNextOpponent();
+                });
+                pokemonOptions.appendChild(option);
+            });
+        }
+
+        function getRandomOpponentLevel(playerLevel) {
+            const levelDifference = [-1, 0, 1][Math.floor(Math.random() * 3)];
+            return Math.max(1, playerLevel + levelDifference);
+        }
+
+        function showNextOpponent() {
+            const allPokemon = Object.values(pokemonPool).flat();
+            const opponentName = getRandomPokemon(allPokemon);
+            const opponentType = getPokemonType(opponentName);
+            const opponentLevel = opponentCount === 0
+                ? 1
+                : getRandomOpponentLevel(playerCombatant.level);
+
+            opponentCount++;
+            opponentCombatant = {
+                type: opponentType,
+                level: opponentLevel,
+                hp: 100 + ((opponentLevel - 1) * 10),
+                maxHp: 100 + ((opponentLevel - 1) * 10)
+            };
+            playerPokemonName.textContent = playerPokemon.name;
+            playerPokemonLevel.textContent = `LEVEL ${playerCombatant.level}`;
+            opponentPokemonName.textContent = opponentName;
+            opponentPokemonLevel.textContent = `LEVEL ${opponentLevel}`;
+            playerBattleCard.className = `battle-card player ${getTypeClass(playerPokemon.type)}`;
+            opponentBattleCard.className = `battle-card opponent ${getTypeClass(opponentType)}`;
+            updateHealthBars();
+            isPlayerTurn = true;
+            tackleButton.disabled = false;
+            battleStatus.textContent = 'Du bist dran!';
+            battleScreen.classList.add('is-visible');
+        }
+
+        function updateHealthBars() {
+            const playerHealthPercentage = (playerCombatant.hp / playerCombatant.maxHp) * 100;
+            const opponentHealthPercentage = (opponentCombatant.hp / opponentCombatant.maxHp) * 100;
+            playerHealthFill.style.width = `${playerHealthPercentage}%`;
+            opponentHealthFill.style.width = `${opponentHealthPercentage}%`;
+            playerHealthPoints.textContent = `${playerCombatant.hp} / ${playerCombatant.maxHp} LP`;
+            opponentHealthPoints.textContent = `${opponentCombatant.hp} / ${opponentCombatant.maxHp} LP`;
+        }
+
+        function createNextOpponent(level) {
+            const allPokemon = Object.values(pokemonPool).flat();
+            const name = getRandomPokemon(allPokemon);
+            const opponentLevel = getRandomOpponentLevel(level);
+            return {
+                name,
+                type: getPokemonType(name),
+                level: opponentLevel,
+                hp: 100 + ((opponentLevel - 1) * 10),
+                maxHp: 100 + ((opponentLevel - 1) * 10)
+            };
+        }
+
+        function applyNextOpponent(nextEnemy) {
+            opponentCombatant = nextEnemy;
+            playerPokemonLevel.textContent = `LEVEL ${playerCombatant.level}`;
+            opponentPokemonName.textContent = nextEnemy.name;
+            opponentPokemonLevel.textContent = `LEVEL ${nextEnemy.level}`;
+            opponentBattleCard.className = `battle-card opponent ${getTypeClass(nextEnemy.type)}`;
+            updateHealthBars();
+            isPlayerTurn = true;
+            tackleButton.disabled = false;
+            battleStatus.textContent = 'Du bist dran!';
+        }
+
+        function resolveEnemyAttack() {
+            const result = resolveAttack(
+                opponentCombatant,
+                playerCombatant,
+                20,
+                playerCombatant,
+                opponentCombatant,
+                createNextOpponent
+            );
+            updateHealthBars();
+            battleStatus.textContent = result.critical
+                ? `${opponentPokemonName.textContent} macht Tackle – KRITISCHER TREFFER! (-${result.damage} LP)`
+                : `${opponentPokemonName.textContent} macht Tackle (-${result.damage} LP)`;
+
+            if (result.status === 'game-over') {
+                window.setTimeout(() => {
+                    battleStatus.textContent = 'Dein Pokémon wurde besiegt!';
+                }, battleMessageDelay);
+                return;
+            }
+
+            window.setTimeout(() => {
+                isPlayerTurn = true;
+                tackleButton.disabled = false;
+                battleStatus.textContent = 'Du bist dran!';
+            }, battleMessageDelay);
+        }
+
+        function performEnemyAttack() {
+            battleStatus.textContent = 'Gegner ist dran';
+            window.setTimeout(() => {
+                battleStatus.textContent = `${opponentPokemonName.textContent} macht Tackle`;
+                window.setTimeout(resolveEnemyAttack, battleMessageDelay);
+            }, battleMessageDelay);
+        }
+
+        function resolvePlayerAttack() {
+            battleStatus.textContent = `${playerPokemon.name} macht Tackle`;
+            const result = resolveAttack(
+                playerCombatant,
+                opponentCombatant,
+                20,
+                playerCombatant,
+                opponentCombatant,
+                createNextOpponent
+            );
+            updateHealthBars();
+            battleStatus.textContent = result.critical
+                ? `${playerPokemon.name} macht Tackle – KRITISCHER TREFFER! (-${result.damage} LP)`
+                : `${playerPokemon.name} macht Tackle (-${result.damage} LP)`;
+
+            if (result.status === 'enemy-defeated') {
+                playerPokemon.level = result.playerLevel;
+                playerCombatant.level = result.playerLevel;
+                playerCombatant.maxHp = result.playerMaxHp;
+                playerCombatant.hp = result.playerHp;
+                playerPokemonLevel.textContent = `LEVEL ${playerCombatant.level}`;
+                battleStatus.textContent = 'Gegner besiegt! Ein neuer Gegner erscheint...';
+                window.setTimeout(() => applyNextOpponent(result.nextEnemy), battleMessageDelay);
+                return;
+            }
+
+            window.setTimeout(performEnemyAttack, battleMessageDelay);
+        }
+
+        function performPlayerAttack() {
+            if (!isPlayerTurn || !playerCombatant || !opponentCombatant) return;
+
+            isPlayerTurn = false;
+            tackleButton.disabled = true;
+            battleStatus.textContent = `${playerPokemon.name} macht Tackle`;
+            window.setTimeout(resolvePlayerAttack, battleMessageDelay);
+        }
+
+        function showPokemonSelection() {
+            battleScreen.classList.remove('is-visible');
+            rollPokemonOptions();
+            pokemonSelection.classList.add('is-visible');
+        }
+
+        document.querySelector('.btn-start').addEventListener('click', showPokemonSelection);
 
         document.querySelector('.btn-settings').addEventListener('click', () => {
             console.log('SETTINGS Button geklickt');
             alert('Einstellungen öffnen...');
+        });
+
+        document.querySelector('.selection-close').addEventListener('click', () => {
+            rollPokemonOptions();
+            pokemonSelection.classList.remove('is-visible');
+        });
+
+        tackleButton.addEventListener('click', performPlayerAttack);
+
+        document.querySelector('.battle-close').addEventListener('click', () => {
+            battleScreen.classList.remove('is-visible');
         });
     </script>
 </body>

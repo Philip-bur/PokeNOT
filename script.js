@@ -32,15 +32,16 @@ function getRollDamageMultiplier(roll) {
 }
 
 function resolveAttack(attacker, defender, baseDamage, player, enemy, createNextOpponent) {
-  const maxRoll = 100 + attacker.level;
-  const roll = Math.floor(Math.random() * maxRoll) + 1;
-
-  const critical = roll > 100;
+  const critical = Math.random() < 0.5;
+  const roll = critical
+    ? 101 + Math.floor(Math.random() * attacker.level)
+    : Math.floor(Math.random() * 100) + 1;
   const typeMultiplier = getTypeMultiplier(attacker.type, defender.type);
   const rollMultiplier = getRollDamageMultiplier(roll);
+  const levelDamageMultiplier = 1 + ((attacker.level - 1) * 0.05);
 
   const damage = Math.round(
-    baseDamage * typeMultiplier * rollMultiplier
+    baseDamage * levelDamageMultiplier * typeMultiplier * rollMultiplier
   );
 
   defender.hp = Math.max(0, defender.hp - damage);
@@ -64,12 +65,13 @@ function resolveAttack(attacker, defender, baseDamage, player, enemy, createNext
     throw new Error("Der Verteidiger muss das eigene oder das gegnerische Pokémon sein.");
   }
 
-  // Gegner besiegt: 30 % der maximalen HP heilen und ein Level aufsteigen.
+  // Gegner besiegt: Level erhöhen, maximales Leben anpassen und 30 % heilen.
+  player.level += 1;
+  player.maxHp = 100 + ((player.level - 1) * 10);
   player.hp = Math.min(
     player.maxHp,
     player.hp + Math.round(player.maxHp * 0.30)
   );
-  player.level += 1;
 
   const nextEnemy = createNextOpponent(player.level);
 
@@ -78,6 +80,7 @@ function resolveAttack(attacker, defender, baseDamage, player, enemy, createNext
     status: "enemy-defeated",
     playerHp: player.hp,
     playerLevel: player.level,
+    playerMaxHp: player.maxHp,
     nextEnemy
   };
 }
@@ -85,13 +88,13 @@ function resolveAttack(attacker, defender, baseDamage, player, enemy, createNext
 const player = {
   type: "Feuer",
   level: 10,
-  hp: 80,
-  maxHp: 100
+  hp: 190,
+  maxHp: 190
 };
 
 const enemy = {
   type: "Wasser",
   level: 11,
-  hp: 100,
-  maxHp: 100
+  hp: 200,
+  maxHp: 200
 };
