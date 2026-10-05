@@ -329,7 +329,7 @@
             color: #E74C3C;
             font-weight: bold;
             text-align: right;
-            min-width: 70px;
+            min-width: 80px;
         }
 
         /* Footer */
@@ -566,10 +566,17 @@
         }
 
         .battle-status {
-            min-height: 24px;
+            min-height: 46px;
             margin-top: 22px;
             color: #2C3E50;
             font-weight: bold;
+        }
+
+        .attack-effectiveness {
+            display: block;
+            margin-top: 5px;
+            font-size: 13px;
+            font-weight: normal;
         }
 
         .battle-versus {
@@ -584,6 +591,8 @@
 
         .attack-actions {
             display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
             justify-content: center;
         }
 
@@ -601,13 +610,63 @@
             margin-top: 16px;
         }
 
-        .tackle-button {
-            background: #EF5350 !important;
+        .highscore-save-button {
+            display: none;
+            margin-top: 16px;
+            background: #F39C12 !important;
             color: white !important;
-            border-color: #C62828 !important;
+            border-color: #D68910 !important;
         }
 
-        .tackle-button:disabled {
+        .highscore-save-button.is-visible {
+            display: inline-block;
+        }
+
+        .highscore-entry {
+            display: none;
+            margin-top: 12px;
+        }
+
+        .highscore-entry.is-visible {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .highscore-name-input {
+            width: 170px;
+            padding: 10px;
+            border: 2px solid #D68910;
+            border-radius: 10px;
+            font: inherit;
+        }
+
+        .tackle-button {
+            background: #7F8C8D !important;
+            color: white !important;
+            border-color: #566573 !important;
+        }
+
+        .special-attack-button {
+            color: white !important;
+        }
+
+        .special-attack-button.fire {
+            background: #E74C3C !important;
+            border-color: #C0392B !important;
+        }
+
+        .special-attack-button.water {
+            background: #3498DB !important;
+            border-color: #2874A6 !important;
+        }
+
+        .special-attack-button.grass {
+            background: #27AE60 !important;
+            border-color: #1E8449 !important;
+        }
+
+        .battle-actions button:disabled {
             cursor: not-allowed;
             opacity: 0.55;
         }
@@ -703,33 +762,7 @@
         <!-- High Score Box -->
         <div class="high-score-box">
             <div class="score-title">HIGH SCORE</div>
-            <ul class="score-list">
-                <li class="score-item">
-                    <span class="score-rank">1.</span>
-                    <span class="score-name">LUNA</span>
-                    <span class="score-points">12,450</span>
-                </li>
-                <li class="score-item">
-                    <span class="score-rank">2.</span>
-                    <span class="score-name">MIKA</span>
-                    <span class="score-points">10,870</span>
-                </li>
-                <li class="score-item">
-                    <span class="score-rank">3.</span>
-                    <span class="score-name">REX</span>
-                    <span class="score-points">9,240</span>
-                </li>
-                <li class="score-item">
-                    <span class="score-rank">4.</span>
-                    <span class="score-name">NOVA</span>
-                    <span class="score-points">7,915</span>
-                </li>
-                <li class="score-item">
-                    <span class="score-rank">5.</span>
-                    <span class="score-name">YOU?</span>
-                    <span class="score-points">---</span>
-                </li>
-            </ul>
+            <ul class="score-list"></ul>
         </div>
     </div>
 
@@ -779,6 +812,12 @@
             <div class="battle-actions">
                 <div class="attack-actions">
                     <button class="tackle-button" type="button">TACKLE</button>
+                    <button class="special-attack-button" type="button"></button>
+                </div>
+                <button class="highscore-save-button" type="button">HIGHSCORE SPEICHERN</button>
+                <div class="highscore-entry">
+                    <input class="highscore-name-input" type="text" maxlength="18" placeholder="Dein Name" aria-label="Name für den Highscore">
+                    <button class="highscore-confirm-button" type="button">EINTRAGEN</button>
                 </div>
                 <div class="battle-menu-action">
                     <button class="battle-close" type="button">ZURÜCK ZUM MENÜ</button>
@@ -822,14 +861,119 @@
         const opponentHealthFill = document.querySelector('.opponent-health-fill');
         const playerHealthPoints = document.querySelector('.player-health-points');
         const opponentHealthPoints = document.querySelector('.opponent-health-points');
+        const scoreList = document.querySelector('.score-list');
         const battleStatus = document.querySelector('.battle-status');
         const tackleButton = document.querySelector('.tackle-button');
+        const specialAttackButton = document.querySelector('.special-attack-button');
+        const highscoreSaveButton = document.querySelector('.highscore-save-button');
+        const highscoreEntry = document.querySelector('.highscore-entry');
+        const highscoreNameInput = document.querySelector('.highscore-name-input');
+        const highscoreConfirmButton = document.querySelector('.highscore-confirm-button');
+        const attackNames = {
+            Feuer: 'Blazing Destruction',
+            Wasser: 'Bubble',
+            Pflanze: 'Leech Seed'
+        };
         const battleMessageDelay = 1200;
         let playerPokemon = null;
         let playerCombatant = null;
         let opponentCombatant = null;
         let opponentCount = 0;
         let isPlayerTurn = true;
+        let gameOverRecorded = false;
+        const highscoreStorageKey = 'pokenot-highscore';
+
+        function getSpecialAttack(type) {
+            return {
+                name: attackNames[type],
+                type
+            };
+        }
+
+        function getTackleAttack() {
+            return {
+                name: 'Tackle',
+                type: 'Normal'
+            };
+        }
+
+        function updateSpecialAttackButton(type) {
+            specialAttackButton.textContent = attackNames[type];
+            specialAttackButton.className = `special-attack-button ${getTypeClass(type)}`;
+        }
+
+        function setAttackButtonsDisabled(disabled) {
+            tackleButton.disabled = disabled;
+            specialAttackButton.disabled = disabled;
+        }
+
+        function getHighscores() {
+            const storedHighscores = localStorage.getItem(highscoreStorageKey);
+            if (!storedHighscores) return [];
+
+            const highscores = JSON.parse(storedHighscores);
+            return Array.isArray(highscores) ? highscores : [];
+        }
+
+        function renderHighscores() {
+            scoreList.replaceChildren();
+            getHighscores().forEach((entry, index) => {
+                const item = document.createElement('li');
+                item.className = 'score-item';
+                item.innerHTML = `
+                    <span class="score-rank">${index + 1}.</span>
+                    <span class="score-name"></span>
+                    <span class="score-points">LEVEL ${entry.level}</span>
+                `;
+                item.querySelector('.score-name').textContent = entry.name;
+                scoreList.appendChild(item);
+            });
+
+            if (!scoreList.children.length) {
+                const emptyItem = document.createElement('li');
+                emptyItem.className = 'score-item';
+                emptyItem.textContent = 'Noch keine Einträge';
+                scoreList.appendChild(emptyItem);
+            }
+        }
+
+        function saveHighscore() {
+            if (gameOverRecorded || !playerCombatant) return;
+
+            const name = highscoreNameInput.value.trim().slice(0, 18);
+            if (!name) return;
+
+            gameOverRecorded = true;
+            const highscores = [
+                ...getHighscores(),
+                { name, level: playerCombatant.level }
+            ]
+                .sort((first, second) => second.level - first.level)
+                .slice(0, 5);
+
+            localStorage.setItem(highscoreStorageKey, JSON.stringify(highscores));
+            renderHighscores();
+            highscoreSaveButton.classList.remove('is-visible');
+            highscoreEntry.classList.remove('is-visible');
+            highscoreNameInput.value = '';
+        }
+
+        function showAttackResult(attackerName, attack, result) {
+            const attackMessage = document.createElement('div');
+            attackMessage.textContent = result.critical
+                ? `${attackerName} macht ${attack.name} – KRITISCHER TREFFER! (-${result.damage} LP)`
+                : `${attackerName} macht ${attack.name} (-${result.damage} LP)`;
+            battleStatus.replaceChildren(attackMessage);
+
+            const effectivenessMessage = document.createElement('span');
+            effectivenessMessage.className = 'attack-effectiveness';
+            effectivenessMessage.textContent = result.typeMultiplier === 1.5
+                ? '(Effektiv +50% Damage)'
+                : result.typeMultiplier === 0.8
+                    ? '(Uneffektiv -20% Damage)'
+                    : '\u00A0';
+            battleStatus.appendChild(effectivenessMessage);
+        }
 
         function getRandomPokemon(pokemon) {
             return pokemon[Math.floor(Math.random() * pokemon.length)];
@@ -860,12 +1004,17 @@
                 `;
                 option.addEventListener('click', () => {
                     playerPokemon = { name: pokemonName, type, level: 1 };
+                    gameOverRecorded = false;
+                    highscoreSaveButton.classList.remove('is-visible');
+                    highscoreEntry.classList.remove('is-visible');
+                    highscoreNameInput.value = '';
                     playerCombatant = {
                         type,
                         level: 1,
                         hp: 100,
                         maxHp: 100
                     };
+                    updateSpecialAttackButton(type);
                     opponentCount = 0;
                     rollPokemonOptions();
                     pokemonSelection.classList.remove('is-visible');
@@ -877,7 +1026,7 @@
 
         function getRandomOpponentLevel(playerLevel) {
             const levelDifference = [-1, 0, 1][Math.floor(Math.random() * 3)];
-            return Math.max(1, playerLevel + levelDifference);
+            return Math.min(playerLevel, Math.max(1, playerLevel + levelDifference));
         }
 
         function showNextOpponent() {
@@ -907,7 +1056,7 @@
             opponentBattleCard.className = `battle-card opponent ${getTypeClass(opponentType)}`;
             updateHealthBars();
             isPlayerTurn = true;
-            tackleButton.disabled = false;
+            setAttackButtonsDisabled(false);
             battleStatus.textContent = 'Du bist dran!';
             battleScreen.classList.add('is-visible');
         }
@@ -944,60 +1093,63 @@
             opponentBattleCard.className = `battle-card opponent ${getTypeClass(nextEnemy.type)}`;
             updateHealthBars();
             isPlayerTurn = true;
-            tackleButton.disabled = false;
+            setAttackButtonsDisabled(false);
             battleStatus.textContent = 'Du bist dran!';
         }
 
-        function resolveEnemyAttack() {
+        function resolveEnemyAttack(attack) {
             const result = resolveAttack(
                 opponentCombatant,
                 playerCombatant,
                 20,
                 playerCombatant,
                 opponentCombatant,
-                createNextOpponent
+                createNextOpponent,
+                attack.type,
+                0.9
             );
             updateHealthBars();
-            battleStatus.textContent = result.critical
-                ? `${opponentPokemonName.textContent} macht Tackle – KRITISCHER TREFFER! (-${result.damage} LP)`
-                : `${opponentPokemonName.textContent} macht Tackle (-${result.damage} LP)`;
+            showAttackResult(opponentPokemonName.textContent, attack, result);
 
             if (result.status === 'game-over') {
                 window.setTimeout(() => {
                     battleStatus.textContent = 'Dein Pokémon wurde besiegt!';
+                    highscoreSaveButton.classList.add('is-visible');
                 }, battleMessageDelay);
                 return;
             }
 
             window.setTimeout(() => {
                 isPlayerTurn = true;
-                tackleButton.disabled = false;
+                setAttackButtonsDisabled(false);
                 battleStatus.textContent = 'Du bist dran!';
             }, battleMessageDelay);
         }
 
         function performEnemyAttack() {
+            const attack = Math.random() < 0.5
+                ? getTackleAttack()
+                : getSpecialAttack(opponentCombatant.type);
             battleStatus.textContent = 'Gegner ist dran';
             window.setTimeout(() => {
-                battleStatus.textContent = `${opponentPokemonName.textContent} macht Tackle`;
-                window.setTimeout(resolveEnemyAttack, battleMessageDelay);
+                battleStatus.textContent = `${opponentPokemonName.textContent} macht ${attack.name}`;
+                window.setTimeout(() => resolveEnemyAttack(attack), battleMessageDelay);
             }, battleMessageDelay);
         }
 
-        function resolvePlayerAttack() {
-            battleStatus.textContent = `${playerPokemon.name} macht Tackle`;
+        function resolvePlayerAttack(attack) {
+            battleStatus.textContent = `${playerPokemon.name} macht ${attack.name}`;
             const result = resolveAttack(
                 playerCombatant,
                 opponentCombatant,
                 20,
                 playerCombatant,
                 opponentCombatant,
-                createNextOpponent
+                createNextOpponent,
+                attack.type
             );
             updateHealthBars();
-            battleStatus.textContent = result.critical
-                ? `${playerPokemon.name} macht Tackle – KRITISCHER TREFFER! (-${result.damage} LP)`
-                : `${playerPokemon.name} macht Tackle (-${result.damage} LP)`;
+            showAttackResult(playerPokemon.name, attack, result);
 
             if (result.status === 'enemy-defeated') {
                 playerPokemon.level = result.playerLevel;
@@ -1013,13 +1165,13 @@
             window.setTimeout(performEnemyAttack, battleMessageDelay);
         }
 
-        function performPlayerAttack() {
+        function performPlayerAttack(attack) {
             if (!isPlayerTurn || !playerCombatant || !opponentCombatant) return;
 
             isPlayerTurn = false;
-            tackleButton.disabled = true;
-            battleStatus.textContent = `${playerPokemon.name} macht Tackle`;
-            window.setTimeout(resolvePlayerAttack, battleMessageDelay);
+            setAttackButtonsDisabled(true);
+            battleStatus.textContent = `${playerPokemon.name} macht ${attack.name}`;
+            window.setTimeout(() => resolvePlayerAttack(attack), battleMessageDelay);
         }
 
         function showPokemonSelection() {
@@ -1029,6 +1181,7 @@
         }
 
         document.querySelector('.btn-start').addEventListener('click', showPokemonSelection);
+        renderHighscores();
 
         document.querySelector('.btn-settings').addEventListener('click', () => {
             console.log('SETTINGS Button geklickt');
@@ -1040,7 +1193,17 @@
             pokemonSelection.classList.remove('is-visible');
         });
 
-        tackleButton.addEventListener('click', performPlayerAttack);
+        tackleButton.addEventListener('click', () => {
+            performPlayerAttack(getTackleAttack());
+        });
+        specialAttackButton.addEventListener('click', () => {
+            performPlayerAttack(getSpecialAttack(playerPokemon.type));
+        });
+        highscoreSaveButton.addEventListener('click', () => {
+            highscoreEntry.classList.add('is-visible');
+            highscoreNameInput.focus();
+        });
+        highscoreConfirmButton.addEventListener('click', saveHighscore);
 
         document.querySelector('.battle-close').addEventListener('click', () => {
             battleScreen.classList.remove('is-visible');

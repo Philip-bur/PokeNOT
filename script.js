@@ -16,8 +16,8 @@ function getTypeMultiplier(attackerType, defenderType) {
   return 1;
 }
 
-function getRollDamageMultiplier(roll) {
-  if (roll > 100) return 1.2; // Kritischer Treffer
+function getRollDamageMultiplier(roll, critical) {
+  if (critical) return 1.2; // Kritischer Treffer
 
   // Zwischen den angegebenen Tabellenwerten linear interpolieren:
   if (roll <= 50) {
@@ -31,17 +31,28 @@ function getRollDamageMultiplier(roll) {
   return 1; // Wurf 100 = 100 % Schaden
 }
 
-function resolveAttack(attacker, defender, baseDamage, player, enemy, createNextOpponent) {
-  const critical = Math.random() < 0.5;
-  const roll = critical
-    ? 101 + Math.floor(Math.random() * attacker.level)
-    : Math.floor(Math.random() * 100) + 1;
-  const typeMultiplier = getTypeMultiplier(attacker.type, defender.type);
-  const rollMultiplier = getRollDamageMultiplier(roll);
+function resolveAttack(
+  attacker,
+  defender,
+  baseDamage,
+  player,
+  enemy,
+  createNextOpponent,
+  attackType = "Normal",
+  damageMultiplier = 1
+) {
+  const roll = Math.floor(Math.random() * (100 + attacker.level)) + 1;
+  const critical = roll > 100;
+  const typeMultiplier = getTypeMultiplier(attackType, defender.type);
+  const rollMultiplier = getRollDamageMultiplier(Math.min(roll, 100), critical);
   const levelDamageMultiplier = 1 + ((attacker.level - 1) * 0.05);
 
   const damage = Math.round(
-    baseDamage * levelDamageMultiplier * typeMultiplier * rollMultiplier
+    baseDamage *
+    levelDamageMultiplier *
+    typeMultiplier *
+    rollMultiplier *
+    damageMultiplier
   );
 
   defender.hp = Math.max(0, defender.hp - damage);
@@ -50,6 +61,7 @@ function resolveAttack(attacker, defender, baseDamage, player, enemy, createNext
     roll,
     critical,
     damage,
+    typeMultiplier,
     defenderHp: defender.hp
   };
 
@@ -65,12 +77,12 @@ function resolveAttack(attacker, defender, baseDamage, player, enemy, createNext
     throw new Error("Der Verteidiger muss das eigene oder das gegnerische Pokémon sein.");
   }
 
-  // Gegner besiegt: Level erhöhen, maximales Leben anpassen und 30 % heilen.
+  // Gegner besiegt: Level erhöhen, maximales Leben anpassen und 50 % heilen.
   player.level += 1;
   player.maxHp = 100 + ((player.level - 1) * 10);
   player.hp = Math.min(
     player.maxHp,
-    player.hp + Math.round(player.maxHp * 0.30)
+    player.hp + Math.round(player.maxHp * 0.50)
   );
 
   const nextEnemy = createNextOpponent(player.level);
