@@ -1050,6 +1050,7 @@
             Pflanze: 'Leech Seed'
         };
         const battleMessageDelay = 1200;
+        const stunnedMessageDelay = battleMessageDelay * 1.35;
         let playerPokemon = null;
         let playerCombatant = null;
         let opponentCombatant = null;
@@ -1404,7 +1405,7 @@
                     setAttackButtonsDisabled(false);
                     updateEnergyDisplay();
                     battleStatus.textContent = 'Du bist dran!';
-                }, battleMessageDelay);
+                }, stunnedMessageDelay);
                 return;
             }
 
