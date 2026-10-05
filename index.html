@@ -982,7 +982,7 @@
             <div class="battle-status">Du bist dran!</div>
             <div class="battle-actions">
                 <div class="attack-actions">
-                    <button class="tackle-button" type="button">Tackle</button>
+                    <button class="tackle-button" type="button" title="Verursacht normalen Schaden und kann kritisch treffen.">Tackle</button>
                     <button class="special-attack-button" type="button"></button>
                     <button class="stun-button" type="button"></button>
                 </div>
@@ -1054,6 +1054,16 @@
             Feuer: 'Blazing Destruction',
             Wasser: 'Bubble',
             Pflanze: 'Leech Seed'
+        };
+        const attackDescriptions = {
+            Feuer: 'Verursacht Feuerschaden und kann kritisch treffen.',
+            Wasser: 'Verursacht Wasserschaden und kann kritisch treffen.',
+            Pflanze: 'Verursacht Pflanzenschaden und kann kritisch treffen.'
+        };
+        const abilityDescriptions = {
+            Feuer: 'Aktiviert Burn: Verursacht 20% des Blazing-Destruction-Schadens pro Runde für 5 Runden. Verursacht keinen direkten Schaden und kann nicht kritisch treffen.',
+            Wasser: 'Erhöht die eigene Dodge-Rate für 3 Runden auf 25%. Verursacht keinen direkten Schaden und kann nicht kritisch treffen.',
+            Pflanze: 'Verursacht 50% des Tackle-Schadens, kann kritisch treffen, und betäubt den Gegner für 1 Runde.'
         };
         const battleMessageDelay = 1200;
         const stunnedMessageDelay = battleMessageDelay * 1.35;
@@ -1178,8 +1188,10 @@
         function updateSpecialAttackButton(type) {
             specialAttackButton.textContent = attackNames[type];
             specialAttackButton.className = `special-attack-button ${getTypeClass(type)}`;
+            specialAttackButton.title = attackDescriptions[type];
             stunButton.textContent = getTypeAbility(type).name;
             stunButton.className = `stun-button ${getTypeClass(type)}`;
+            stunButton.title = abilityDescriptions[type];
         }
 
         function setAttackButtonsDisabled(disabled) {
