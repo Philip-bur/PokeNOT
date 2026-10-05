@@ -43,6 +43,8 @@ function resolveAttack(
 ) {
   const roll = Math.floor(Math.random() * (100 + attacker.level)) + 1;
   const critical = roll > 100;
+  const dodgeChance = Math.min(defender.level, 10);
+  const dodged = !critical && Math.random() * 100 < dodgeChance;
   const typeMultiplier = getTypeMultiplier(attackType, defender.type);
   const rollMultiplier = getRollDamageMultiplier(Math.min(roll, 100), critical);
   const levelDamageMultiplier = 1 + ((attacker.level - 1) * 0.05);
@@ -55,12 +57,15 @@ function resolveAttack(
     damageMultiplier
   );
 
-  defender.hp = Math.max(0, defender.hp - damage);
+  const dealtDamage = dodged ? 0 : damage;
+  defender.hp = Math.max(0, defender.hp - dealtDamage);
 
   const result = {
     roll,
     critical,
-    damage,
+    dodged,
+    dodgeChance,
+    damage: dealtDamage,
     typeMultiplier,
     defenderHp: defender.hp
   };

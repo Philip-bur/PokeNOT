@@ -812,6 +812,26 @@
             opacity: 0.55;
         }
 
+        .auto-battle-button {
+            position: fixed;
+            left: 20px;
+            bottom: 20px;
+            z-index: 31;
+            padding: 10px 16px;
+            border: 2px solid #2C3E50;
+            border-radius: 10px;
+            background: #8E44AD;
+            color: white;
+            font: inherit;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .auto-battle-button.is-active {
+            background: #27AE60;
+            border-color: #1E8449;
+        }
+
         @media (max-width: 900px) {
             .container {
                 flex-direction: column;
@@ -940,6 +960,7 @@
 
     <!-- Kampfansicht -->
     <div class="battle-screen" role="dialog" aria-modal="true" aria-labelledby="battle-title">
+        <button class="auto-battle-button" type="button" aria-pressed="false">AUTO BATTLE: AUS</button>
         <div class="battle-box">
             <h2 class="battle-title" id="battle-title">KAMPF BEGINNT!</h2>
             <div class="battle-pokemon">
@@ -1044,6 +1065,7 @@
         const highscoreEntry = document.querySelector('.highscore-entry');
         const highscoreNameInput = document.querySelector('.highscore-name-input');
         const highscoreConfirmButton = document.querySelector('.highscore-confirm-button');
+        const autoBattleButton = document.querySelector('.auto-battle-button');
         const attackNames = {
             Feuer: 'Blazing Destruction',
             Wasser: 'Bubble',
@@ -1059,6 +1081,7 @@
         let playerEnergy = 100 / 3;
         let opponentStunned = false;
         let opponentDamageDebuff = false;
+        let autoBattleEnabled = false;
         let gameOverRecorded = false;
         const highscoreStorageKey = 'pokenot-highscore';
         const volumeStorageKey = 'pokenot-volume';
@@ -1151,16 +1174,44 @@
         }
 
         function setAttackButtonsDisabled(disabled) {
-            tackleButton.disabled = disabled;
-            specialAttackButton.disabled = disabled;
-            stunButton.disabled = disabled || playerEnergy < 100;
+            tackleButton.disabled = disabled || autoBattleEnabled;
+            specialAttackButton.disabled = disabled || autoBattleEnabled;
+            stunButton.disabled = disabled || autoBattleEnabled || playerEnergy < 100;
         }
 
         function updateEnergyDisplay() {
             const displayedEnergy = Math.min(100, playerEnergy);
             energyFill.style.width = `${displayedEnergy}%`;
             energyValue.textContent = `${displayedEnergy.toFixed(2).replace('.', ',')}%`;
-            stunButton.disabled = !isPlayerTurn || displayedEnergy < 100;
+            stunButton.disabled = !isPlayerTurn || autoBattleEnabled || displayedEnergy < 100;
+        }
+
+        function scheduleAutoBattleTurn() {
+            if (!autoBattleEnabled || !isPlayerTurn || !playerCombatant || !opponentCombatant) return;
+
+            window.setTimeout(() => {
+                if (!autoBattleEnabled || !isPlayerTurn || !playerCombatant || !opponentCombatant) return;
+
+                if (playerEnergy >= 100 && Math.random() < 0.25) {
+                    performStun();
+                    return;
+                }
+
+                const attack = Math.random() < 0.5
+                    ? getTackleAttack()
+                    : getSpecialAttack(playerPokemon.type);
+                performPlayerAttack(attack);
+            }, battleMessageDelay);
+        }
+
+        function setAutoBattleEnabled(enabled) {
+            autoBattleEnabled = enabled;
+            autoBattleButton.classList.toggle('is-active', enabled);
+            autoBattleButton.setAttribute('aria-pressed', String(enabled));
+            autoBattleButton.textContent = `AUTO BATTLE: ${enabled ? 'AN' : 'AUS'}`;
+            setAttackButtonsDisabled(!isPlayerTurn);
+            updateEnergyDisplay();
+            if (enabled) scheduleAutoBattleTurn();
         }
 
         function gainEnergy() {
@@ -1221,7 +1272,9 @@
 
         function showAttackResult(attackerName, attack, result) {
             const attackMessage = document.createElement('div');
-            attackMessage.textContent = result.critical
+            attackMessage.textContent = result.dodged
+                ? `${attackerName} macht ${attack.name} – AUSGEWICHEN!`
+                : result.critical
                 ? `${attackerName} macht ${attack.name} – KRITISCHER TREFFER! (-${result.damage} LP)`
                 : `${attackerName} macht ${attack.name} (-${result.damage} LP)`;
             battleStatus.replaceChildren(attackMessage);
@@ -1324,6 +1377,7 @@
             updateEnergyDisplay();
             battleStatus.textContent = 'Du bist dran!';
             battleScreen.classList.add('is-visible');
+            scheduleAutoBattleTurn();
         }
 
         function updateHealthBars() {
@@ -1363,6 +1417,7 @@
             setAttackButtonsDisabled(false);
             updateEnergyDisplay();
             battleStatus.textContent = 'Du bist dran!';
+            scheduleAutoBattleTurn();
         }
 
         function resolveEnemyAttack(attack) {
@@ -1382,6 +1437,7 @@
             showAttackResult(opponentPokemonName.textContent, attack, result);
 
             if (result.status === 'game-over') {
+                setAutoBattleEnabled(false);
                 window.setTimeout(() => {
                     battleStatus.textContent = 'Dein Pokémon wurde besiegt!';
                     highscoreSaveButton.classList.add('is-visible');
@@ -1393,6 +1449,7 @@
                 isPlayerTurn = true;
                 setAttackButtonsDisabled(false);
                 battleStatus.textContent = 'Du bist dran!';
+                scheduleAutoBattleTurn();
             }, battleMessageDelay);
         }
 
@@ -1405,6 +1462,7 @@
                     setAttackButtonsDisabled(false);
                     updateEnergyDisplay();
                     battleStatus.textContent = 'Du bist dran!';
+                    scheduleAutoBattleTurn();
                 }, stunnedMessageDelay);
                 return;
             }
@@ -1506,8 +1564,12 @@
             highscoreNameInput.focus();
         });
         highscoreConfirmButton.addEventListener('click', saveHighscore);
+        autoBattleButton.addEventListener('click', () => {
+            setAutoBattleEnabled(!autoBattleEnabled);
+        });
 
         document.querySelector('.battle-close').addEventListener('click', () => {
+            setAutoBattleEnabled(false);
             battleScreen.classList.remove('is-visible');
         });
     </script>
