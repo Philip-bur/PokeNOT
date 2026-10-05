@@ -678,6 +678,35 @@
             font-weight: bold;
         }
 
+        .energy-section {
+            margin: 20px auto 0;
+            max-width: 420px;
+            color: #2C3E50;
+            font-weight: bold;
+        }
+
+        .energy-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+
+        .energy-bar {
+            height: 14px;
+            overflow: hidden;
+            border: 2px solid #2C3E50;
+            border-radius: 8px;
+            background: #E8D7C3;
+        }
+
+        .energy-fill {
+            width: 33.33%;
+            height: 100%;
+            background: #F1C40F;
+            transition: width 0.25s ease;
+        }
+
         .attack-effectiveness {
             display: block;
             margin-top: 5px;
@@ -770,6 +799,12 @@
         .special-attack-button.grass {
             background: #27AE60 !important;
             border-color: #1E8449 !important;
+        }
+
+        .stun-button {
+            background: #F1C40F !important;
+            color: #2C3E50 !important;
+            border-color: #B7950B !important;
         }
 
         .battle-actions button:disabled {
@@ -931,10 +966,20 @@
                 </div>
             </div>
             <div class="battle-status">Du bist dran!</div>
+            <div class="energy-section">
+                <div class="energy-label">
+                    <span>ENERGY</span>
+                    <span class="energy-value">33,33%</span>
+                </div>
+                <div class="energy-bar" aria-label="Energy des eigenen Pokémon">
+                    <div class="energy-fill"></div>
+                </div>
+            </div>
             <div class="battle-actions">
                 <div class="attack-actions">
                     <button class="tackle-button" type="button">TACKLE</button>
                     <button class="special-attack-button" type="button"></button>
+                    <button class="stun-button" type="button" disabled>STUN (100% ENERGY)</button>
                 </div>
                 <button class="highscore-save-button" type="button">HIGHSCORE SPEICHERN</button>
                 <div class="highscore-entry">
@@ -992,6 +1037,9 @@
         const battleStatus = document.querySelector('.battle-status');
         const tackleButton = document.querySelector('.tackle-button');
         const specialAttackButton = document.querySelector('.special-attack-button');
+        const stunButton = document.querySelector('.stun-button');
+        const energyFill = document.querySelector('.energy-fill');
+        const energyValue = document.querySelector('.energy-value');
         const highscoreSaveButton = document.querySelector('.highscore-save-button');
         const highscoreEntry = document.querySelector('.highscore-entry');
         const highscoreNameInput = document.querySelector('.highscore-name-input');
@@ -1007,6 +1055,9 @@
         let opponentCombatant = null;
         let opponentCount = 0;
         let isPlayerTurn = true;
+        let playerEnergy = 100 / 3;
+        let opponentStunned = false;
+        let opponentDamageDebuff = false;
         let gameOverRecorded = false;
         const highscoreStorageKey = 'pokenot-highscore';
         const volumeStorageKey = 'pokenot-volume';
@@ -1101,6 +1152,19 @@
         function setAttackButtonsDisabled(disabled) {
             tackleButton.disabled = disabled;
             specialAttackButton.disabled = disabled;
+            stunButton.disabled = disabled || playerEnergy < 100;
+        }
+
+        function updateEnergyDisplay() {
+            const displayedEnergy = Math.min(100, playerEnergy);
+            energyFill.style.width = `${displayedEnergy}%`;
+            energyValue.textContent = `${displayedEnergy.toFixed(2).replace('.', ',')}%`;
+            stunButton.disabled = !isPlayerTurn || displayedEnergy < 100;
+        }
+
+        function gainEnergy() {
+            playerEnergy = Math.min(100, playerEnergy + (100 / 3));
+            updateEnergyDisplay();
         }
 
         function getHighscores() {
@@ -1201,6 +1265,9 @@
                 option.addEventListener('click', () => {
                     playerPokemon = { name: pokemonName, type, level: 1 };
                     gameOverRecorded = false;
+                    playerEnergy = 100 / 3;
+                    opponentStunned = false;
+                    opponentDamageDebuff = false;
                     highscoreSaveButton.classList.remove('is-visible');
                     highscoreEntry.classList.remove('is-visible');
                     highscoreNameInput.value = '';
@@ -1253,6 +1320,7 @@
             updateHealthBars();
             isPlayerTurn = true;
             setAttackButtonsDisabled(false);
+            updateEnergyDisplay();
             battleStatus.textContent = 'Du bist dran!';
             battleScreen.classList.add('is-visible');
         }
@@ -1281,6 +1349,8 @@
 
         function applyNextOpponent(nextEnemy) {
             opponentCombatant = nextEnemy;
+            opponentStunned = false;
+            opponentDamageDebuff = false;
             playerPokemonLevel.textContent = `LEVEL ${playerCombatant.level}`;
             opponentPokemonName.textContent = nextEnemy.name;
             opponentPokemonImage.src = pokemonImages[nextEnemy.name];
@@ -1290,10 +1360,13 @@
             updateHealthBars();
             isPlayerTurn = true;
             setAttackButtonsDisabled(false);
+            updateEnergyDisplay();
             battleStatus.textContent = 'Du bist dran!';
         }
 
         function resolveEnemyAttack(attack) {
+            const damageMultiplier = opponentDamageDebuff ? 0.8 : 1;
+            opponentDamageDebuff = false;
             const result = resolveAttack(
                 opponentCombatant,
                 playerCombatant,
@@ -1302,7 +1375,7 @@
                 opponentCombatant,
                 createNextOpponent,
                 attack.type,
-                0.9
+                0.9 * damageMultiplier
             );
             updateHealthBars();
             showAttackResult(opponentPokemonName.textContent, attack, result);
@@ -1323,6 +1396,18 @@
         }
 
         function performEnemyAttack() {
+            if (opponentStunned) {
+                opponentStunned = false;
+                battleStatus.textContent = `${opponentPokemonName.textContent} ist betäubt und setzt diese Runde aus!`;
+                window.setTimeout(() => {
+                    isPlayerTurn = true;
+                    setAttackButtonsDisabled(false);
+                    updateEnergyDisplay();
+                    battleStatus.textContent = 'Du bist dran!';
+                }, battleMessageDelay);
+                return;
+            }
+
             const attack = Math.random() < 0.5
                 ? getTackleAttack()
                 : getSpecialAttack(opponentCombatant.type);
@@ -1361,11 +1446,25 @@
             window.setTimeout(performEnemyAttack, battleMessageDelay);
         }
 
+        function performStun() {
+            if (!isPlayerTurn || playerEnergy < 100 || !playerCombatant || !opponentCombatant) return;
+
+            isPlayerTurn = false;
+            setAttackButtonsDisabled(true);
+            playerEnergy = 0;
+            opponentStunned = true;
+            opponentDamageDebuff = true;
+            updateEnergyDisplay();
+            battleStatus.textContent = `${playerPokemon.name} setzt STUN ein!`;
+            window.setTimeout(performEnemyAttack, battleMessageDelay);
+        }
+
         function performPlayerAttack(attack) {
             if (!isPlayerTurn || !playerCombatant || !opponentCombatant) return;
 
             isPlayerTurn = false;
             setAttackButtonsDisabled(true);
+            gainEnergy();
             battleStatus.textContent = `${playerPokemon.name} macht ${attack.name}`;
             window.setTimeout(() => resolvePlayerAttack(attack), battleMessageDelay);
         }
@@ -1400,6 +1499,7 @@
         specialAttackButton.addEventListener('click', () => {
             performPlayerAttack(getSpecialAttack(playerPokemon.type));
         });
+        stunButton.addEventListener('click', performStun);
         highscoreSaveButton.addEventListener('click', () => {
             highscoreEntry.classList.add('is-visible');
             highscoreNameInput.focus();
