@@ -366,8 +366,10 @@
         }
 
         .selection-box {
-            width: min(850px, 100%);
-            padding: 35px;
+            width: min(1050px, 100%);
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            padding: 42px;
             background: #F5E6D3;
             border: 5px solid #2C3E50;
             border-radius: 25px;
@@ -394,7 +396,8 @@
         }
 
         .pokemon-option {
-            padding: 24px 12px;
+            min-height: 270px;
+            padding: 22px 16px;
             border: 4px solid;
             border-radius: 18px;
             color: #2C3E50;
@@ -432,6 +435,14 @@
             text-transform: uppercase;
         }
 
+        .pokemon-image {
+            display: block;
+            width: 170px;
+            height: 170px;
+            object-fit: contain;
+            margin: 0 auto 12px;
+        }
+
         .selection-close {
             margin-top: 25px;
             padding: 10px 22px;
@@ -460,8 +471,10 @@
         }
 
         .battle-box {
-            width: min(700px, 100%);
-            padding: 35px;
+            width: min(900px, 100%);
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            padding: 42px;
             background: #F5E6D3;
             border: 5px solid #2C3E50;
             border-radius: 25px;
@@ -483,7 +496,8 @@
         }
 
         .battle-card {
-            padding: 25px 12px;
+            min-height: 330px;
+            padding: 22px 16px;
             border: 4px solid #2C3E50;
             border-radius: 18px;
             color: #2C3E50;
@@ -511,6 +525,14 @@
             font-size: 13px;
             letter-spacing: 2px;
             text-transform: uppercase;
+        }
+
+        .battle-image {
+            display: block;
+            width: 210px;
+            height: 210px;
+            object-fit: contain;
+            margin: 0 auto 8px;
         }
 
         .battle-level {
@@ -622,6 +644,19 @@
                 padding: 25px 18px;
             }
 
+            .pokemon-option {
+                min-height: 230px;
+            }
+
+            .pokemon-image {
+                width: 145px;
+                height: 145px;
+            }
+
+            .battle-box {
+                padding: 25px 18px;
+            }
+
             .pokemon-options {
                 grid-template-columns: 1fr;
             }
@@ -720,6 +755,7 @@
             <div class="battle-pokemon">
                 <div class="battle-card player">
                     <span class="battle-label">DEIN POKÉMON</span>
+                    <img class="battle-image player-pokemon-image" alt="">
                     <span class="player-pokemon-name"></span>
                     <span class="battle-level player-pokemon-level"></span>
                     <span class="health-points player-health-points"></span>
@@ -730,6 +766,7 @@
                 <span class="battle-versus">VS</span>
                 <div class="battle-card opponent">
                     <span class="battle-label">GEGNER</span>
+                    <img class="battle-image opponent-pokemon-image" alt="">
                     <span class="opponent-pokemon-name"></span>
                     <span class="battle-level opponent-pokemon-level"></span>
                     <span class="health-points opponent-health-points"></span>
@@ -753,17 +790,31 @@
     <script src="script.js"></script>
     <script>
         const pokemonPool = {
-            Feuer: ['Feurigel', 'Panflam', 'Glumanda'],
-            Wasser: ['Ottoro', 'Shiggy', 'Froxy'],
-            Pflanze: ['Bisasam', 'Felori', 'Bauz']
+            Feuer: ['Cyndabeer', 'Charchim', 'Charman'],
+            Wasser: ['Ottatron', 'Schiggurt', 'gorF'],
+            Pflanze: ['Boolbiesore', 'Felorp', 'Baozi']
+        };
+
+        const pokemonImages = {
+            Cyndabeer: 'resources/images/Cyndabeer.png',
+            Charchim: 'resources/images/Charchim.png',
+            Charman: 'resources/images/Charman.png',
+            Ottatron: 'resources/images/Ottatron.png',
+            Schiggurt: 'resources/images/Schiggurt.png',
+            gorF: 'resources/images/Gorf.png',
+            Boolbiesore: 'resources/images/Boolbiesore.png',
+            Felorp: 'resources/images/Felorp.png',
+            Baozi: 'resources/images/Baozi.png'
         };
 
         const pokemonSelection = document.querySelector('.pokemon-selection');
         const pokemonOptions = document.querySelector('.pokemon-options');
         const battleScreen = document.querySelector('.battle-screen');
         const playerPokemonName = document.querySelector('.player-pokemon-name');
+        const playerPokemonImage = document.querySelector('.player-pokemon-image');
         const playerPokemonLevel = document.querySelector('.player-pokemon-level');
         const opponentPokemonName = document.querySelector('.opponent-pokemon-name');
+        const opponentPokemonImage = document.querySelector('.opponent-pokemon-image');
         const opponentPokemonLevel = document.querySelector('.opponent-pokemon-level');
         const playerBattleCard = document.querySelector('.battle-card.player');
         const opponentBattleCard = document.querySelector('.battle-card.opponent');
@@ -802,7 +853,11 @@
                 option.className = `pokemon-option ${typeClass}`;
                 option.type = 'button';
                 const pokemonName = getRandomPokemon(pokemon);
-                option.innerHTML = `<span class="pokemon-type">${type}</span>${pokemonName}`;
+                option.innerHTML = `
+                    <span class="pokemon-type">${type}</span>
+                    <img class="pokemon-image" src="${pokemonImages[pokemonName]}" alt="${pokemonName}">
+                    <span>${pokemonName}</span>
+                `;
                 option.addEventListener('click', () => {
                     playerPokemon = { name: pokemonName, type, level: 1 };
                     playerCombatant = {
@@ -841,8 +896,12 @@
                 maxHp: 100 + ((opponentLevel - 1) * 10)
             };
             playerPokemonName.textContent = playerPokemon.name;
+            playerPokemonImage.src = pokemonImages[playerPokemon.name];
+            playerPokemonImage.alt = playerPokemon.name;
             playerPokemonLevel.textContent = `LEVEL ${playerCombatant.level}`;
             opponentPokemonName.textContent = opponentName;
+            opponentPokemonImage.src = pokemonImages[opponentName];
+            opponentPokemonImage.alt = opponentName;
             opponentPokemonLevel.textContent = `LEVEL ${opponentLevel}`;
             playerBattleCard.className = `battle-card player ${getTypeClass(playerPokemon.type)}`;
             opponentBattleCard.className = `battle-card opponent ${getTypeClass(opponentType)}`;
@@ -879,6 +938,8 @@
             opponentCombatant = nextEnemy;
             playerPokemonLevel.textContent = `LEVEL ${playerCombatant.level}`;
             opponentPokemonName.textContent = nextEnemy.name;
+            opponentPokemonImage.src = pokemonImages[nextEnemy.name];
+            opponentPokemonImage.alt = nextEnemy.name;
             opponentPokemonLevel.textContent = `LEVEL ${nextEnemy.level}`;
             opponentBattleCard.className = `battle-card opponent ${getTypeClass(nextEnemy.type)}`;
             updateHealthBars();

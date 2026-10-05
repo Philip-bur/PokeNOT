@@ -84,17 +84,3 @@ function resolveAttack(attacker, defender, baseDamage, player, enemy, createNext
     nextEnemy
   };
 }
-
-const player = {
-  type: "Feuer",
-  level: 10,
-  hp: 190,
-  maxHp: 190
-};
-
-const enemy = {
-  type: "Wasser",
-  level: 11,
-  hp: 200,
-  maxHp: 200
-};
