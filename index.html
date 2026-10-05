@@ -83,9 +83,28 @@
                     <li>HP-Anzeigen, Dodge-/Krit-Chancen und Effektmeldungen im Kampf ergänzt.</li>
                     <li>Attacken-Tooltips zeigen jetzt Wirkung, Krit-Fähigkeit und Status-Effekte an.</li>
                     <li>Attacken- und Effektmeldungen wurden verlängert, damit sie besser lesbar sind.</li>
+                    <li>Inventar mit Heiltränken ergänzt: Nach einem besiegten Gegner besteht eine 5% Fundchance; ein Trank heilt 20% der maximalen HP und verbraucht den Zug.</li>
                 </ul>
             </article>
             <button class="patch-notes-close" type="button">ZURÜCK</button>
+        </div>
+    </div>
+
+    <div class="inventory-screen" role="dialog" aria-modal="true" aria-labelledby="inventory-title" aria-hidden="true">
+        <div class="inventory-box">
+            <h2 class="inventory-title" id="inventory-title">INVENTAR</h2>
+            <div class="inventory-item">
+                <img class="inventory-item-image" src="resources/images/healing_pot.png" alt="Heiltrank">
+                <div class="inventory-item-details">
+                    <h3>Heiltrank</h3>
+                    <p>Heilt 20% der maximalen HP deines Pokémon.</p>
+                    <p class="inventory-item-count">Anzahl: <strong>0</strong></p>
+                </div>
+            </div>
+            <div class="inventory-actions">
+                <button class="inventory-use-button" type="button">BENUTZEN</button>
+                <button class="inventory-close" type="button">ZURÜCK</button>
+            </div>
         </div>
     </div>
 
@@ -102,6 +121,7 @@
     <!-- Kampfansicht -->
     <div class="battle-screen" role="dialog" aria-modal="true" aria-labelledby="battle-title">
         <button class="auto-battle-button" type="button" aria-pressed="false">AUTO BATTLE: AUS</button>
+        <button class="inventory-button" type="button">INVENTAR (0)</button>
         <div class="battle-box">
             <h2 class="battle-title" id="battle-title">KAMPF BEGINNT!</h2>
             <div class="battle-pokemon">

@@ -23,6 +23,11 @@ const pokemonPool = {
         const patchNotesScreen = document.querySelector('.patch-notes-screen');
         const patchNotesButton = document.querySelector('.patch-notes-button');
         const patchNotesCloseButton = document.querySelector('.patch-notes-close');
+        const inventoryButton = document.querySelector('.inventory-button');
+        const inventoryScreen = document.querySelector('.inventory-screen');
+        const inventoryCloseButton = document.querySelector('.inventory-close');
+        const inventoryUseButton = document.querySelector('.inventory-use-button');
+        const inventoryItemCount = document.querySelector('.inventory-item-count strong');
         const diceGrid = document.querySelector('.dice-grid');
         const volumeValue = document.querySelector('.volume-value');
         const rollVolumeButton = document.querySelector('.roll-volume-button');
@@ -73,6 +78,7 @@ const pokemonPool = {
         let opponentCount = 0;
         let isPlayerTurn = true;
         let autoBattleEnabled = false;
+        let healingPotionCount = 0;
         let gameOverRecorded = false;
         const highscoreStorageKey = 'pokenot-highscore';
         const volumeStorageKey = 'pokenot-volume';
@@ -198,6 +204,47 @@ const pokemonPool = {
             tackleButton.disabled = disabled || autoBattleEnabled;
             specialAttackButton.disabled = disabled || autoBattleEnabled;
             stunButton.disabled = disabled || autoBattleEnabled;
+            inventoryButton.disabled = disabled || autoBattleEnabled;
+        }
+
+        function updateInventoryDisplay() {
+            inventoryButton.textContent = `INVENTAR (${healingPotionCount})`;
+            inventoryButton.disabled = !isPlayerTurn || autoBattleEnabled;
+            inventoryItemCount.textContent = healingPotionCount;
+            inventoryUseButton.disabled = !isPlayerTurn || autoBattleEnabled || healingPotionCount === 0;
+        }
+
+        function searchForHealingPotion() {
+            if (Math.random() >= 0.05) return false;
+
+            healingPotionCount++;
+            updateInventoryDisplay();
+            return true;
+        }
+
+        function useHealingPotion() {
+            if (!isPlayerTurn || healingPotionCount === 0 || !playerCombatant || !opponentCombatant) return;
+            if (playerCombatant.hp >= playerCombatant.maxHp) {
+                battleStatus.textContent = 'Dein Pokémon hat bereits volle HP.';
+                return;
+            }
+
+            inventoryScreen.classList.remove('is-visible');
+            inventoryScreen.setAttribute('aria-hidden', 'true');
+            isPlayerTurn = false;
+            setAttackButtonsDisabled(true);
+            const healedHp = Math.min(
+                playerCombatant.maxHp,
+                Math.round(playerCombatant.maxHp * 0.20)
+            );
+            const previousHp = playerCombatant.hp;
+            playerCombatant.hp = Math.min(playerCombatant.maxHp, playerCombatant.hp + healedHp);
+            const actualHeal = playerCombatant.hp - previousHp;
+            healingPotionCount--;
+            updateHealthBars();
+            updateInventoryDisplay();
+            battleStatus.textContent = `Heiltrank benutzt: +${actualHeal} HP geheilt!`;
+            window.setTimeout(performEnemyAttack, battleMessageDelay);
         }
 
         function scheduleAutoBattleTurn() {
@@ -371,6 +418,8 @@ const pokemonPool = {
                     };
                     updateSpecialAttackButton(type);
                     opponentCount = 0;
+                    healingPotionCount = 1;
+                    updateInventoryDisplay();
                     rollPokemonOptions();
                     pokemonSelection.classList.remove('is-visible');
                     showNextOpponent();
@@ -412,6 +461,7 @@ const pokemonPool = {
             updateHealthBars();
             isPlayerTurn = true;
             setAttackButtonsDisabled(false);
+            updateInventoryDisplay();
             battleStatus.textContent = 'Du bist dran!';
             battleScreen.classList.add('is-visible');
             scheduleAutoBattleTurn();
@@ -479,6 +529,7 @@ const pokemonPool = {
             updateHealthBars();
             isPlayerTurn = true;
             setAttackButtonsDisabled(false);
+            updateInventoryDisplay();
             battleStatus.textContent = 'Du bist dran!';
             scheduleAutoBattleTurn();
         }
@@ -526,6 +577,10 @@ const pokemonPool = {
                 playerCombatant.maxHp = 100 + ((playerCombatant.level - 1) * 10);
                 playerCombatant.hp = Math.min(playerCombatant.maxHp, playerCombatant.hp + Math.round(playerCombatant.maxHp * 0.50));
                 battleStatus.textContent = 'Gegner besiegt! Ein neuer Gegner erscheint...';
+                const foundPotion = searchForHealingPotion();
+                if (foundPotion) {
+                    battleStatus.textContent = 'Gegner besiegt! Du hast einen Heiltrank gefunden.';
+                }
                 window.setTimeout(() => applyNextOpponent(createNextOpponent(playerCombatant.level)), battleMessageDelay);
                 return;
             }
@@ -564,6 +619,9 @@ const pokemonPool = {
                 playerCombatant.hp = result.playerHp;
                 playerPokemonLevel.textContent = `LEVEL ${playerCombatant.level}`;
                 battleStatus.textContent = 'Gegner besiegt! Ein neuer Gegner erscheint...';
+                if (searchForHealingPotion()) {
+                    battleStatus.textContent = 'Gegner besiegt! Du hast einen Heiltrank gefunden.';
+                }
                 window.setTimeout(() => applyNextOpponent(result.nextEnemy), battleMessageDelay);
                 return;
             }
@@ -639,6 +697,16 @@ const pokemonPool = {
             performPlayerAttack(getSpecialAttack(playerPokemon.type));
         });
         stunButton.addEventListener('click', performTypeAbility);
+        inventoryButton.addEventListener('click', () => {
+            updateInventoryDisplay();
+            inventoryScreen.classList.add('is-visible');
+            inventoryScreen.setAttribute('aria-hidden', 'false');
+        });
+        inventoryUseButton.addEventListener('click', useHealingPotion);
+        inventoryCloseButton.addEventListener('click', () => {
+            inventoryScreen.classList.remove('is-visible');
+            inventoryScreen.setAttribute('aria-hidden', 'true');
+        });
         highscoreSaveButton.addEventListener('click', () => {
             highscoreEntry.classList.add('is-visible');
             highscoreNameInput.focus();
