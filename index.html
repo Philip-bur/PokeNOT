@@ -268,6 +268,112 @@
             border: 4px solid #2E7D32;
         }
 
+        /* Lautstärke-Einstellungen */
+        .settings-screen {
+            display: none;
+            position: fixed;
+            inset: 0;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            background: rgba(44, 62, 80, 0.72);
+            z-index: 30;
+        }
+
+        .settings-screen.is-visible {
+            display: flex;
+        }
+
+        .settings-box {
+            width: min(680px, 100%);
+            padding: 35px;
+            background: #F5E6D3;
+            border: 5px solid #2C3E50;
+            border-radius: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+            text-align: center;
+        }
+
+        .settings-title {
+            color: #2C3E50;
+            font-size: 26px;
+            margin-bottom: 8px;
+        }
+
+        .settings-subtitle {
+            color: #8B6F47;
+            font-weight: bold;
+            margin-bottom: 22px;
+        }
+
+        .dice-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 14px 10px;
+            margin-bottom: 24px;
+        }
+
+        .dice-control {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            color: #2C3E50;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .volume-die {
+            display: grid;
+            place-items: center;
+            width: 66px;
+            height: 66px;
+            background: #F8F8F8;
+            border: 3px solid #2C3E50;
+            border-radius: 3px;
+            color: #17202A;
+            font-size: 25px;
+            font-weight: bold;
+            box-shadow: inset 0 -3px 0 rgba(0,0,0,0.08);
+        }
+
+        .dice-hold {
+            accent-color: #E67E22;
+            cursor: pointer;
+        }
+
+        .volume-result {
+            margin-bottom: 20px;
+            color: #2C3E50;
+            font-size: 22px;
+        }
+
+        .volume-result strong {
+            color: #E74C3C;
+        }
+
+        .settings-actions {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .settings-actions button {
+            padding: 10px 18px;
+            border: 2px solid #2C3E50;
+            border-radius: 10px;
+            background: transparent;
+            color: #2C3E50;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .roll-volume-button {
+            background: #E67E22 !important;
+            color: white !important;
+            border-color: #BA4A00 !important;
+        }
+
         /* High Score Box */
         .high-score-box {
             background: #F5E6D3;
@@ -771,6 +877,20 @@
         <div class="footer-authors">MADE BY PHILIP • MARIO • PAUL</div>
     </div>
 
+    <!-- Lautstärke-Einstellungen -->
+    <div class="settings-screen" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <div class="settings-box">
+            <h2 class="settings-title" id="settings-title">LAUTSTÄRKE</h2>
+            <p class="settings-subtitle">Würfle deine Lautstärke mit zehn 10-seitigen Würfeln.</p>
+            <div class="dice-grid"></div>
+            <div class="volume-result">Volume: <strong class="volume-value">10</strong></div>
+            <div class="settings-actions">
+                <button class="roll-volume-button" type="button">ROLL</button>
+                <button class="settings-close" type="button">ZURÜCK</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Pokemon-Auswahl -->
     <div class="pokemon-selection" role="dialog" aria-modal="true" aria-labelledby="selection-title">
         <div class="selection-box">
@@ -849,6 +969,10 @@
         const pokemonSelection = document.querySelector('.pokemon-selection');
         const pokemonOptions = document.querySelector('.pokemon-options');
         const battleScreen = document.querySelector('.battle-screen');
+        const settingsScreen = document.querySelector('.settings-screen');
+        const diceGrid = document.querySelector('.dice-grid');
+        const volumeValue = document.querySelector('.volume-value');
+        const rollVolumeButton = document.querySelector('.roll-volume-button');
         const playerPokemonName = document.querySelector('.player-pokemon-name');
         const playerPokemonImage = document.querySelector('.player-pokemon-image');
         const playerPokemonLevel = document.querySelector('.player-pokemon-level');
@@ -882,6 +1006,9 @@
         let isPlayerTurn = true;
         let gameOverRecorded = false;
         const highscoreStorageKey = 'pokenot-highscore';
+        const volumeStorageKey = 'pokenot-volume';
+        const volumeDiceStorageKey = 'pokenot-volume-dice';
+        const volumeDice = Array.from({ length: 10 }, () => 1);
 
         function getSpecialAttack(type) {
             return {
@@ -895,6 +1022,66 @@
                 name: 'Tackle',
                 type: 'Normal'
             };
+        }
+
+        function applyWebsiteVolume(volume) {
+            document.querySelectorAll('audio').forEach((audio) => {
+                audio.volume = volume / 100;
+            });
+        }
+
+        function updateVolumeDisplay() {
+            const volume = volumeDice.reduce((total, value) => total + value, 0);
+            volumeValue.textContent = volume;
+            applyWebsiteVolume(volume);
+            localStorage.setItem(volumeStorageKey, String(volume));
+            localStorage.setItem(volumeDiceStorageKey, JSON.stringify(volumeDice));
+        }
+
+        function renderVolumeDice(heldDice = []) {
+            diceGrid.replaceChildren();
+            volumeDice.forEach((value, index) => {
+                const control = document.createElement('label');
+                control.className = 'dice-control';
+                control.innerHTML = `
+                    <span class="volume-die" aria-label="Würfel ${index + 1}: ${value}">${value}</span>
+                    <span><input class="dice-hold" type="checkbox" ${heldDice[index] ? 'checked' : ''}> Hold</span>
+                `;
+                diceGrid.appendChild(control);
+            });
+        }
+
+        function rollVolumeDice() {
+            const heldDice = Array.from(diceGrid.querySelectorAll('.dice-hold'))
+                .map((checkbox) => checkbox.checked);
+            diceGrid.querySelectorAll('.dice-control').forEach((control, index) => {
+                const holdCheckbox = control.querySelector('.dice-hold');
+                if (!holdCheckbox.checked) {
+                    volumeDice[index] = Math.floor(Math.random() * 10) + 1;
+                }
+            });
+            renderVolumeDice(heldDice);
+            updateVolumeDisplay();
+        }
+
+        function openSettings() {
+            const storedDice = localStorage.getItem(volumeDiceStorageKey);
+            if (storedDice) {
+                try {
+                    const parsedDice = JSON.parse(storedDice);
+                    if (Array.isArray(parsedDice) && parsedDice.length === 10
+                        && parsedDice.every((value) => Number.isInteger(value) && value >= 1 && value <= 10)) {
+                        parsedDice.forEach((value, index) => {
+                            volumeDice[index] = value;
+                        });
+                    }
+                } catch (error) {
+                    console.error('Gespeicherte Lautstärke-Würfel konnten nicht gelesen werden.', error);
+                }
+            }
+            settingsScreen.classList.add('is-visible');
+            renderVolumeDice();
+            updateVolumeDisplay();
         }
 
         function updateSpecialAttackButton(type) {
@@ -1183,9 +1370,10 @@
         document.querySelector('.btn-start').addEventListener('click', showPokemonSelection);
         renderHighscores();
 
-        document.querySelector('.btn-settings').addEventListener('click', () => {
-            console.log('SETTINGS Button geklickt');
-            alert('Einstellungen öffnen...');
+        document.querySelector('.btn-settings').addEventListener('click', openSettings);
+        rollVolumeButton.addEventListener('click', rollVolumeDice);
+        document.querySelector('.settings-close').addEventListener('click', () => {
+            settingsScreen.classList.remove('is-visible');
         });
 
         document.querySelector('.selection-close').addEventListener('click', () => {
