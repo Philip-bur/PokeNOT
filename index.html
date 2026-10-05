@@ -671,40 +671,19 @@
             font-weight: bold;
         }
 
+        .combat-stats {
+            display: block;
+            margin-top: 6px;
+            color: #566573;
+            font-size: 12px;
+            font-weight: normal;
+        }
+
         .battle-status {
             min-height: 46px;
             margin-top: 22px;
             color: #2C3E50;
             font-weight: bold;
-        }
-
-        .energy-section {
-            margin: 20px auto 0;
-            max-width: 420px;
-            color: #2C3E50;
-            font-weight: bold;
-        }
-
-        .energy-label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 6px;
-            font-size: 13px;
-        }
-
-        .energy-bar {
-            height: 14px;
-            overflow: hidden;
-            border: 2px solid #2C3E50;
-            border-radius: 8px;
-            background: #E8D7C3;
-        }
-
-        .energy-fill {
-            width: 33.33%;
-            height: 100%;
-            background: #F1C40F;
-            transition: width 0.25s ease;
         }
 
         .attack-effectiveness {
@@ -801,10 +780,22 @@
             border-color: #1E8449 !important;
         }
 
-        .stun-button {
-            background: #F1C40F !important;
-            color: #2C3E50 !important;
-            border-color: #B7950B !important;
+        .stun-button.fire {
+            background: #E74C3C !important;
+            color: white !important;
+            border-color: #C0392B !important;
+        }
+
+        .stun-button.water {
+            background: #3498DB !important;
+            color: white !important;
+            border-color: #2874A6 !important;
+        }
+
+        .stun-button.grass {
+            background: #27AE60 !important;
+            color: white !important;
+            border-color: #1E8449 !important;
         }
 
         .battle-actions button:disabled {
@@ -970,7 +961,8 @@
                     <span class="player-pokemon-name"></span>
                     <span class="battle-level player-pokemon-level"></span>
                     <span class="health-points player-health-points"></span>
-                    <div class="health-bar" aria-label="Lebenspunkte eigenes Pokémon">
+                    <span class="combat-stats player-combat-stats"></span>
+                    <div class="health-bar" aria-label="HP eigenes Pokémon">
                         <div class="health-fill player-health-fill"></div>
                     </div>
                 </div>
@@ -981,26 +973,18 @@
                     <span class="opponent-pokemon-name"></span>
                     <span class="battle-level opponent-pokemon-level"></span>
                     <span class="health-points opponent-health-points"></span>
-                    <div class="health-bar" aria-label="Lebenspunkte Gegner">
+                    <span class="combat-stats opponent-combat-stats"></span>
+                    <div class="health-bar" aria-label="HP Gegner">
                         <div class="health-fill opponent-health-fill"></div>
                     </div>
                 </div>
             </div>
             <div class="battle-status">Du bist dran!</div>
-            <div class="energy-section">
-                <div class="energy-label">
-                    <span>ENERGY</span>
-                    <span class="energy-value">33,33%</span>
-                </div>
-                <div class="energy-bar" aria-label="Energy des eigenen Pokémon">
-                    <div class="energy-fill"></div>
-                </div>
-            </div>
             <div class="battle-actions">
                 <div class="attack-actions">
                     <button class="tackle-button" type="button">Tackle</button>
                     <button class="special-attack-button" type="button"></button>
-                    <button class="stun-button" type="button" disabled>Stun (Energy: 100%)</button>
+                    <button class="stun-button" type="button"></button>
                 </div>
                 <button class="highscore-save-button" type="button">HIGHSCORE SPEICHERN</button>
                 <div class="highscore-entry">
@@ -1054,13 +1038,13 @@
         const opponentHealthFill = document.querySelector('.opponent-health-fill');
         const playerHealthPoints = document.querySelector('.player-health-points');
         const opponentHealthPoints = document.querySelector('.opponent-health-points');
+        const playerCombatStats = document.querySelector('.player-combat-stats');
+        const opponentCombatStats = document.querySelector('.opponent-combat-stats');
         const scoreList = document.querySelector('.score-list');
         const battleStatus = document.querySelector('.battle-status');
         const tackleButton = document.querySelector('.tackle-button');
         const specialAttackButton = document.querySelector('.special-attack-button');
         const stunButton = document.querySelector('.stun-button');
-        const energyFill = document.querySelector('.energy-fill');
-        const energyValue = document.querySelector('.energy-value');
         const highscoreSaveButton = document.querySelector('.highscore-save-button');
         const highscoreEntry = document.querySelector('.highscore-entry');
         const highscoreNameInput = document.querySelector('.highscore-name-input');
@@ -1078,9 +1062,6 @@
         let opponentCombatant = null;
         let opponentCount = 0;
         let isPlayerTurn = true;
-        let playerEnergy = 100 / 3;
-        let opponentStunned = false;
-        let opponentDamageDebuff = false;
         let autoBattleEnabled = false;
         let gameOverRecorded = false;
         const highscoreStorageKey = 'pokenot-highscore';
@@ -1093,6 +1074,32 @@
                 name: attackNames[type],
                 type
             };
+        }
+
+        function getTypeAbility(type) {
+            return {
+                Feuer: {
+                    name: 'Burn',
+                    type: 'Feuer',
+                    baseDamage: 0,
+                    damageMultiplier: 1,
+                    effect: { type: 'burn', burnBaseDamage: 20, cannotDodge: true }
+                },
+                Wasser: {
+                    name: 'Muddy Water',
+                    type: 'Wasser',
+                    baseDamage: 0,
+                    damageMultiplier: 1,
+                    effect: { type: 'muddy-water', cannotDodge: true }
+                },
+                Pflanze: {
+                    name: 'Stun Spore',
+                    type: 'Pflanze',
+                    baseDamage: 20,
+                    damageMultiplier: 0.5,
+                    effect: { type: 'stun' }
+                }
+            }[type];
         }
 
         function getTackleAttack() {
@@ -1171,19 +1178,14 @@
         function updateSpecialAttackButton(type) {
             specialAttackButton.textContent = attackNames[type];
             specialAttackButton.className = `special-attack-button ${getTypeClass(type)}`;
+            stunButton.textContent = getTypeAbility(type).name;
+            stunButton.className = `stun-button ${getTypeClass(type)}`;
         }
 
         function setAttackButtonsDisabled(disabled) {
             tackleButton.disabled = disabled || autoBattleEnabled;
             specialAttackButton.disabled = disabled || autoBattleEnabled;
-            stunButton.disabled = disabled || autoBattleEnabled || playerEnergy < 100;
-        }
-
-        function updateEnergyDisplay() {
-            const displayedEnergy = Math.min(100, playerEnergy);
-            energyFill.style.width = `${displayedEnergy}%`;
-            energyValue.textContent = `${displayedEnergy.toFixed(2).replace('.', ',')}%`;
-            stunButton.disabled = !isPlayerTurn || autoBattleEnabled || displayedEnergy < 100;
+            stunButton.disabled = disabled || autoBattleEnabled;
         }
 
         function scheduleAutoBattleTurn() {
@@ -1192,8 +1194,8 @@
             window.setTimeout(() => {
                 if (!autoBattleEnabled || !isPlayerTurn || !playerCombatant || !opponentCombatant) return;
 
-                if (playerEnergy >= 100 && Math.random() < 0.25) {
-                    performStun();
+                if (Math.random() < 0.25) {
+                    performTypeAbility();
                     return;
                 }
 
@@ -1210,13 +1212,7 @@
             autoBattleButton.setAttribute('aria-pressed', String(enabled));
             autoBattleButton.textContent = `AUTO BATTLE: ${enabled ? 'AN' : 'AUS'}`;
             setAttackButtonsDisabled(!isPlayerTurn);
-            updateEnergyDisplay();
             if (enabled) scheduleAutoBattleTurn();
-        }
-
-        function gainEnergy() {
-            playerEnergy = Math.min(100, playerEnergy + (100 / 3));
-            updateEnergyDisplay();
         }
 
         function getHighscores() {
@@ -1272,11 +1268,13 @@
 
         function showAttackResult(attackerName, attack, result) {
             const attackMessage = document.createElement('div');
-            attackMessage.textContent = result.dodged
+            attackMessage.textContent = result.effectApplied && result.damage === 0
+                ? `${attackerName} setzt ${attack.name} ein!`
+                : result.dodged
                 ? `${attackerName} macht ${attack.name} – AUSGEWICHEN!`
                 : result.critical
-                ? `${attackerName} macht ${attack.name} – KRITISCHER TREFFER! (-${result.damage} LP)`
-                : `${attackerName} macht ${attack.name} (-${result.damage} LP)`;
+                ? `${attackerName} macht ${attack.name} – KRITISCHER TREFFER! (-${result.damage} HP)`
+                : `${attackerName} macht ${attack.name} (-${result.damage} HP)`;
             battleStatus.replaceChildren(attackMessage);
 
             const effectivenessMessage = document.createElement('span');
@@ -1287,6 +1285,27 @@
                     ? '(Uneffektiv -20% Damage)'
                     : '\u00A0';
             battleStatus.appendChild(effectivenessMessage);
+
+            if (result.effectApplied === 'burn') {
+                battleStatus.appendChild(createEffectMessage(
+                    `Burn aktiviert: -${result.burnDamage} HP pro Runde für ${result.burnTurns} Runden.`
+                ));
+            } else if (result.effectApplied === 'stun') {
+                battleStatus.appendChild(createEffectMessage(
+                    'Stun Spore erfolgreich: Der Gegner setzt 1 Runde aus.'
+                ));
+            } else if (result.effectApplied === 'muddy-water') {
+                battleStatus.appendChild(createEffectMessage(
+                    'Muddy Water erfolgreich: Dodge-Rate auf 25% erhöht für 3 Runden.'
+                ));
+            }
+        }
+
+        function createEffectMessage(text) {
+            const effectMessage = document.createElement('span');
+            effectMessage.className = 'attack-effectiveness';
+            effectMessage.textContent = text;
+            return effectMessage;
         }
 
         function getRandomPokemon(pokemon) {
@@ -1319,9 +1338,6 @@
                 option.addEventListener('click', () => {
                     playerPokemon = { name: pokemonName, type, level: 1 };
                     gameOverRecorded = false;
-                    playerEnergy = 100 / 3;
-                    opponentStunned = false;
-                    opponentDamageDebuff = false;
                     highscoreSaveButton.classList.remove('is-visible');
                     highscoreEntry.classList.remove('is-visible');
                     highscoreNameInput.value = '';
@@ -1374,7 +1390,6 @@
             updateHealthBars();
             isPlayerTurn = true;
             setAttackButtonsDisabled(false);
-            updateEnergyDisplay();
             battleStatus.textContent = 'Du bist dran!';
             battleScreen.classList.add('is-visible');
             scheduleAutoBattleTurn();
@@ -1385,8 +1400,37 @@
             const opponentHealthPercentage = (opponentCombatant.hp / opponentCombatant.maxHp) * 100;
             playerHealthFill.style.width = `${playerHealthPercentage}%`;
             opponentHealthFill.style.width = `${opponentHealthPercentage}%`;
-            playerHealthPoints.textContent = `${playerCombatant.hp} / ${playerCombatant.maxHp} LP`;
-            opponentHealthPoints.textContent = `${opponentCombatant.hp} / ${opponentCombatant.maxHp} LP`;
+            playerHealthPoints.textContent = `${playerCombatant.hp} / ${playerCombatant.maxHp} HP`;
+            opponentHealthPoints.textContent = `${opponentCombatant.hp} / ${opponentCombatant.maxHp} HP`;
+            playerCombatStats.textContent = formatCombatStats(playerCombatant);
+            opponentCombatStats.textContent = formatCombatStats(opponentCombatant);
+        }
+
+        function formatCombatStats(combatant) {
+            const dodgeChance = Math.min(25, Math.min(combatant.level, 10) + (combatant.dodgeBonus || 0));
+            const criticalChance = (combatant.level / (100 + combatant.level)) * 100;
+            return `Dodge: ${dodgeChance.toFixed(2).replace('.', ',')}% | Krit: ${criticalChance.toFixed(2).replace('.', ',')}%`;
+        }
+
+        function applyBurnDamage(combatant) {
+            if (!combatant.burnTurns) return false;
+
+            combatant.hp = Math.max(0, combatant.hp - combatant.burnDamage);
+            combatant.burnTurns--;
+            updateHealthBars();
+            battleStatus.textContent = `${combatant === playerCombatant ? playerPokemon.name : opponentPokemonName.textContent} erleidet Burn-Schaden (-${combatant.burnDamage} HP)!`;
+            return combatant.hp === 0;
+        }
+
+        function advanceMuddyWater() {
+            if (!playerCombatant.dodgeBonusTurns) return false;
+
+            playerCombatant.dodgeBonusTurns--;
+            if (playerCombatant.dodgeBonusTurns === 0) {
+                playerCombatant.dodgeBonus = 0;
+                return true;
+            }
+            return false;
         }
 
         function createNextOpponent(level) {
@@ -1404,8 +1448,6 @@
 
         function applyNextOpponent(nextEnemy) {
             opponentCombatant = nextEnemy;
-            opponentStunned = false;
-            opponentDamageDebuff = false;
             playerPokemonLevel.textContent = `LEVEL ${playerCombatant.level}`;
             opponentPokemonName.textContent = nextEnemy.name;
             opponentPokemonImage.src = pokemonImages[nextEnemy.name];
@@ -1415,23 +1457,21 @@
             updateHealthBars();
             isPlayerTurn = true;
             setAttackButtonsDisabled(false);
-            updateEnergyDisplay();
             battleStatus.textContent = 'Du bist dran!';
             scheduleAutoBattleTurn();
         }
 
         function resolveEnemyAttack(attack) {
-            const damageMultiplier = opponentDamageDebuff ? 0.8 : 1;
-            opponentDamageDebuff = false;
             const result = resolveAttack(
                 opponentCombatant,
                 playerCombatant,
-                20,
+                attack.baseDamage ?? 20,
                 playerCombatant,
                 opponentCombatant,
                 createNextOpponent,
                 attack.type,
-                0.9 * damageMultiplier
+                attack.damageMultiplier ?? 0.9,
+                attack.effect
             );
             updateHealthBars();
             showAttackResult(opponentPokemonName.textContent, attack, result);
@@ -1449,27 +1489,45 @@
                 isPlayerTurn = true;
                 setAttackButtonsDisabled(false);
                 battleStatus.textContent = 'Du bist dran!';
+                if (advanceMuddyWater()) {
+                    battleStatus.textContent = 'Muddy Water ist ausgelaufen. Die Dodge-Rate ist wieder normal.';
+                }
+                updateHealthBars();
                 scheduleAutoBattleTurn();
             }, battleMessageDelay);
         }
 
         function performEnemyAttack() {
-            if (opponentStunned) {
-                opponentStunned = false;
+            if (applyBurnDamage(opponentCombatant)) {
+                playerPokemon.level++;
+                playerCombatant.level = playerPokemon.level;
+                playerCombatant.maxHp = 100 + ((playerCombatant.level - 1) * 10);
+                playerCombatant.hp = Math.min(playerCombatant.maxHp, playerCombatant.hp + Math.round(playerCombatant.maxHp * 0.50));
+                battleStatus.textContent = 'Gegner besiegt! Ein neuer Gegner erscheint...';
+                window.setTimeout(() => applyNextOpponent(createNextOpponent(playerCombatant.level)), battleMessageDelay);
+                return;
+            }
+            if (opponentCombatant.stunnedTurns > 0) {
+                opponentCombatant.stunnedTurns--;
                 battleStatus.textContent = `${opponentPokemonName.textContent} ist betäubt und setzt diese Runde aus!`;
                 window.setTimeout(() => {
                     isPlayerTurn = true;
                     setAttackButtonsDisabled(false);
-                    updateEnergyDisplay();
                     battleStatus.textContent = 'Du bist dran!';
+                    if (advanceMuddyWater()) {
+                        battleStatus.textContent = 'Muddy Water ist ausgelaufen. Die Dodge-Rate ist wieder normal.';
+                    }
+                    updateHealthBars();
                     scheduleAutoBattleTurn();
                 }, stunnedMessageDelay);
                 return;
             }
 
-            const attack = Math.random() < 0.5
-                ? getTackleAttack()
-                : getSpecialAttack(opponentCombatant.type);
+            const attack = Math.random() < 0.25
+                ? getTypeAbility(opponentCombatant.type)
+                : Math.random() < 0.5
+                    ? getTackleAttack()
+                    : getSpecialAttack(opponentCombatant.type);
             battleStatus.textContent = 'Gegner ist dran';
             window.setTimeout(() => {
                 battleStatus.textContent = `${opponentPokemonName.textContent} macht ${attack.name}`;
@@ -1482,11 +1540,13 @@
             const result = resolveAttack(
                 playerCombatant,
                 opponentCombatant,
-                20,
+                attack.baseDamage ?? 20,
                 playerCombatant,
                 opponentCombatant,
                 createNextOpponent,
-                attack.type
+                attack.type,
+                attack.damageMultiplier ?? 1,
+                attack.effect
             );
             updateHealthBars();
             showAttackResult(playerPokemon.name, attack, result);
@@ -1505,17 +1565,19 @@
             window.setTimeout(performEnemyAttack, battleMessageDelay);
         }
 
-        function performStun() {
-            if (!isPlayerTurn || playerEnergy < 100 || !playerCombatant || !opponentCombatant) return;
+        function performTypeAbility() {
+            if (!isPlayerTurn || !playerCombatant || !opponentCombatant) return;
 
             isPlayerTurn = false;
             setAttackButtonsDisabled(true);
-            playerEnergy = 0;
-            opponentStunned = true;
-            opponentDamageDebuff = true;
-            updateEnergyDisplay();
-            battleStatus.textContent = `${playerPokemon.name} setzt STUN ein!`;
-            window.setTimeout(performEnemyAttack, battleMessageDelay);
+            if (applyBurnDamage(playerCombatant)) {
+                setAutoBattleEnabled(false);
+                highscoreSaveButton.classList.add('is-visible');
+                return;
+            }
+            const ability = getTypeAbility(playerPokemon.type);
+            battleStatus.textContent = `${playerPokemon.name} setzt ${ability.name} ein!`;
+            window.setTimeout(() => resolvePlayerAttack(ability), battleMessageDelay);
         }
 
         function performPlayerAttack(attack) {
@@ -1523,7 +1585,11 @@
 
             isPlayerTurn = false;
             setAttackButtonsDisabled(true);
-            gainEnergy();
+            if (applyBurnDamage(playerCombatant)) {
+                setAutoBattleEnabled(false);
+                highscoreSaveButton.classList.add('is-visible');
+                return;
+            }
             battleStatus.textContent = `${playerPokemon.name} macht ${attack.name}`;
             window.setTimeout(() => resolvePlayerAttack(attack), battleMessageDelay);
         }
@@ -1558,7 +1624,7 @@
         specialAttackButton.addEventListener('click', () => {
             performPlayerAttack(getSpecialAttack(playerPokemon.type));
         });
-        stunButton.addEventListener('click', performStun);
+        stunButton.addEventListener('click', performTypeAbility);
         highscoreSaveButton.addEventListener('click', () => {
             highscoreEntry.classList.add('is-visible');
             highscoreNameInput.focus();

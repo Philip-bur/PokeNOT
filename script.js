@@ -39,12 +39,13 @@ function resolveAttack(
   enemy,
   createNextOpponent,
   attackType = "Normal",
-  damageMultiplier = 1
+  damageMultiplier = 1,
+  effect = null
 ) {
   const roll = Math.floor(Math.random() * (100 + attacker.level)) + 1;
   const critical = roll > 100;
-  const dodgeChance = Math.min(defender.level, 10);
-  const dodged = !critical && Math.random() * 100 < dodgeChance;
+  const dodgeChance = Math.min(25, Math.min(defender.level, 10) + (defender.dodgeBonus || 0));
+  const dodged = !critical && effect?.cannotDodge !== true && Math.random() * 100 < dodgeChance;
   const typeMultiplier = getTypeMultiplier(attackType, defender.type);
   const rollMultiplier = getRollDamageMultiplier(Math.min(roll, 100), critical);
   const levelDamageMultiplier = 1 + ((attacker.level - 1) * 0.05);
@@ -59,6 +60,23 @@ function resolveAttack(
 
   const dealtDamage = dodged ? 0 : damage;
   defender.hp = Math.max(0, defender.hp - dealtDamage);
+  if (!dodged && effect?.type === "stun") {
+    defender.stunnedTurns = 1;
+  }
+  if (!dodged && effect?.type === "burn") {
+    defender.burnTurns = 5;
+    const burnSourceDamage = Math.round(
+      (effect.burnBaseDamage || baseDamage) *
+      levelDamageMultiplier *
+      typeMultiplier *
+      rollMultiplier
+    );
+    defender.burnDamage = Math.max(1, Math.round(burnSourceDamage * 0.2));
+  }
+  if (effect?.type === "muddy-water") {
+    attacker.dodgeBonus = 25;
+    attacker.dodgeBonusTurns = 3;
+  }
 
   const result = {
     roll,
@@ -67,7 +85,17 @@ function resolveAttack(
     dodgeChance,
     damage: dealtDamage,
     typeMultiplier,
-    defenderHp: defender.hp
+    defenderHp: defender.hp,
+    effectApplied: !dodged && effect?.type !== "muddy-water"
+      ? effect?.type
+      : effect?.type === "muddy-water"
+        ? "muddy-water"
+        : null,
+    burnDamage: !dodged && effect?.type === "burn" ? defender.burnDamage : 0,
+    burnTurns: !dodged && effect?.type === "burn" ? defender.burnTurns : 0,
+    dodgeBonus: effect?.type === "muddy-water" ? attacker.dodgeBonus : 0,
+    dodgeBonusTurns: effect?.type === "muddy-water" ? attacker.dodgeBonusTurns : 0,
+    stunnedTurns: !dodged && effect?.type === "stun" ? defender.stunnedTurns : 0
   };
 
   if (defender.hp > 0) {
