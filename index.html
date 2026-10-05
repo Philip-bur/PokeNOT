@@ -877,6 +877,8 @@
         <div class="footer-authors">MADE BY PHILIP • MARIO • PAUL</div>
     </div>
 
+    <audio id="theme-audio" src="resources/soundtrack/PokeNot_Theme.mp3" loop autoplay preload="auto"></audio>
+
     <!-- Lautstärke-Einstellungen -->
     <div class="settings-screen" role="dialog" aria-modal="true" aria-labelledby="settings-title">
         <div class="settings-box">
@@ -973,6 +975,7 @@
         const diceGrid = document.querySelector('.dice-grid');
         const volumeValue = document.querySelector('.volume-value');
         const rollVolumeButton = document.querySelector('.roll-volume-button');
+        const themeAudio = document.querySelector('#theme-audio');
         const playerPokemonName = document.querySelector('.player-pokemon-name');
         const playerPokemonImage = document.querySelector('.player-pokemon-image');
         const playerPokemonLevel = document.querySelector('.player-pokemon-level');
@@ -1027,6 +1030,12 @@
         function applyWebsiteVolume(volume) {
             document.querySelectorAll('audio').forEach((audio) => {
                 audio.volume = volume / 100;
+            });
+        }
+
+        function playThemeMusic() {
+            themeAudio.play().catch(() => {
+                console.warn('Der Theme-Soundtrack konnte noch nicht automatisch gestartet werden.');
             });
         }
 
@@ -1369,6 +1378,10 @@
 
         document.querySelector('.btn-start').addEventListener('click', showPokemonSelection);
         renderHighscores();
+        applyWebsiteVolume(Number(localStorage.getItem(volumeStorageKey)) || 10);
+        playThemeMusic();
+        document.addEventListener('pointerdown', playThemeMusic, { once: true });
+        document.addEventListener('keydown', playThemeMusic, { once: true });
 
         document.querySelector('.btn-settings').addEventListener('click', openSettings);
         rollVolumeButton.addEventListener('click', rollVolumeDice);
