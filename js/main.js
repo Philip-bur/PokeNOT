@@ -61,10 +61,9 @@ const pokemonPool = {
         const abilityDescriptions = {
             Feuer: 'Aktiviert Burn: Verursacht 20% des Blazing-Destruction-Schadens pro Runde für 5 Runden. Verursacht keinen direkten Schaden und kann nicht kritisch treffen.',
             Wasser: 'Erhöht die eigene Dodge-Rate für 3 Runden auf 25%. Verursacht keinen direkten Schaden und kann nicht kritisch treffen.',
-            Pflanze: 'Verursacht 50% des Tackle-Schadens, kann kritisch treffen, und betäubt den Gegner für 1 Runde.'
+            Pflanze: 'Hat eine 75% Chance, den Gegner zu paralysieren. Andernfalls verursacht sie 50% des Tackle-Schadens.'
         };
         const battleMessageDelay = 1200;
-        const stunnedMessageDelay = battleMessageDelay * 1.35;
         let playerPokemon = null;
         let playerCombatant = null;
         let opponentCombatant = null;
@@ -105,7 +104,7 @@ const pokemonPool = {
                     type: 'Pflanze',
                     baseDamage: 20,
                     damageMultiplier: 0.5,
-                    effect: { type: 'stun' }
+                    effect: { type: 'paralysis' }
                 }
             }[type];
         }
@@ -278,7 +277,9 @@ const pokemonPool = {
 
         function showAttackResult(attackerName, attack, result) {
             const attackMessage = document.createElement('div');
-            attackMessage.textContent = result.effectApplied && result.damage === 0
+            attackMessage.textContent = result.effectApplied === 'paralysis-failed'
+                ? `${attackerName}s ${attack.name} schlägt wegen Paralyse fehl!`
+                : result.effectApplied && result.damage === 0
                 ? `${attackerName} setzt ${attack.name} ein!`
                 : result.dodged
                 ? `${attackerName} macht ${attack.name} – AUSGEWICHEN!`
@@ -300,9 +301,17 @@ const pokemonPool = {
                 battleStatus.appendChild(createEffectMessage(
                     `Burn aktiviert: -${result.burnDamage} HP pro Runde für ${result.burnTurns} Runden.`
                 ));
-            } else if (result.effectApplied === 'stun') {
+            } else if (result.effectApplied === 'paralysis') {
                 battleStatus.appendChild(createEffectMessage(
-                    'Stun Spore erfolgreich: Der Gegner setzt 1 Runde aus.'
+                    'Paralyse erfolgreich: Der Gegner hat ab jetzt eine 25% Chance, mit seiner Attacke auszusetzen.'
+                ));
+            } else if (result.effectApplied === 'paralysis-damage') {
+                battleStatus.appendChild(createEffectMessage(
+                    'Paralyse nicht ausgelöst: Stun Spore verursacht stattdessen Schaden.'
+                ));
+            } else if (result.effectApplied === 'paralysis-failed') {
+                battleStatus.appendChild(createEffectMessage(
+                    'Paralyse wirkt: Die Attacke fällt aus.'
                 ));
             } else if (result.effectApplied === 'muddy-water') {
                 battleStatus.appendChild(createEffectMessage(
@@ -517,22 +526,6 @@ const pokemonPool = {
                 window.setTimeout(() => applyNextOpponent(createNextOpponent(playerCombatant.level)), battleMessageDelay);
                 return;
             }
-            if (opponentCombatant.stunnedTurns > 0) {
-                opponentCombatant.stunnedTurns--;
-                battleStatus.textContent = `${opponentPokemonName.textContent} ist betäubt und setzt diese Runde aus!`;
-                window.setTimeout(() => {
-                    isPlayerTurn = true;
-                    setAttackButtonsDisabled(false);
-                    battleStatus.textContent = 'Du bist dran!';
-                    if (advanceMuddyWater()) {
-                        battleStatus.textContent = 'Muddy Water ist ausgelaufen. Die Dodge-Rate ist wieder normal.';
-                    }
-                    updateHealthBars();
-                    scheduleAutoBattleTurn();
-                }, stunnedMessageDelay);
-                return;
-            }
-
             const attack = Math.random() < 0.25
                 ? getTypeAbility(opponentCombatant.type)
                 : Math.random() < 0.5

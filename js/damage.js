@@ -42,6 +42,21 @@ function resolveAttack(
   damageMultiplier = 1,
   effect = null
 ) {
+  if (attacker.paralyzed && Math.random() < 0.25) {
+    return {
+      roll: null,
+      critical: false,
+      dodged: false,
+      paralyzedAttack: true,
+      dodgeChance: Math.min(25, Math.min(defender.level, 10) + (defender.dodgeBonus || 0)),
+      damage: 0,
+      typeMultiplier: getTypeMultiplier(attackType, defender.type),
+      defenderHp: defender.hp,
+      effectApplied: "paralysis-failed",
+      status: "next-turn"
+    };
+  }
+
   const roll = Math.floor(Math.random() * (100 + attacker.level)) + 1;
   const critical = roll > 100;
   const dodgeChance = Math.min(25, Math.min(defender.level, 10) + (defender.dodgeBonus || 0));
@@ -58,10 +73,13 @@ function resolveAttack(
     damageMultiplier
   );
 
-  const dealtDamage = dodged ? 0 : damage;
+  const paralysisApplied = !dodged
+    && effect?.type === "paralysis"
+    && Math.random() < 0.75;
+  const dealtDamage = dodged || paralysisApplied ? 0 : damage;
   defender.hp = Math.max(0, defender.hp - dealtDamage);
-  if (!dodged && effect?.type === "stun") {
-    defender.stunnedTurns = 1;
+  if (paralysisApplied) {
+    defender.paralyzed = true;
   }
   if (!dodged && effect?.type === "burn") {
     defender.burnTurns = 5;
@@ -86,16 +104,22 @@ function resolveAttack(
     damage: dealtDamage,
     typeMultiplier,
     defenderHp: defender.hp,
-    effectApplied: !dodged && effect?.type !== "muddy-water"
-      ? effect?.type
-      : effect?.type === "muddy-water"
-        ? "muddy-water"
-        : null,
+    paralyzedAttack: false,
+    effectApplied: paralysisApplied
+      ? "paralysis"
+      : !dodged && effect?.type === "paralysis"
+        ? "paralysis-damage"
+        : !dodged && effect?.type !== "muddy-water"
+          ? effect?.type
+          : effect?.type === "muddy-water"
+            ? "muddy-water"
+            : null,
     burnDamage: !dodged && effect?.type === "burn" ? defender.burnDamage : 0,
     burnTurns: !dodged && effect?.type === "burn" ? defender.burnTurns : 0,
     dodgeBonus: effect?.type === "muddy-water" ? attacker.dodgeBonus : 0,
     dodgeBonusTurns: effect?.type === "muddy-water" ? attacker.dodgeBonusTurns : 0,
-    stunnedTurns: !dodged && effect?.type === "stun" ? defender.stunnedTurns : 0
+    paralysisApplied,
+    paralyzed: paralysisApplied ? defender.paralyzed : false
   };
 
   if (defender.hp > 0) {
