@@ -20,6 +20,9 @@ const pokemonPool = {
         const pokemonOptions = document.querySelector('.pokemon-options');
         const battleScreen = document.querySelector('.battle-screen');
         const settingsScreen = document.querySelector('.settings-screen');
+        const patchNotesScreen = document.querySelector('.patch-notes-screen');
+        const patchNotesButton = document.querySelector('.patch-notes-button');
+        const patchNotesCloseButton = document.querySelector('.patch-notes-close');
         const diceGrid = document.querySelector('.dice-grid');
         const volumeValue = document.querySelector('.volume-value');
         const rollVolumeButton = document.querySelector('.roll-volume-button');
@@ -611,6 +614,14 @@ const pokemonPool = {
         document.addEventListener('keydown', playThemeMusic, { once: true });
 
         document.querySelector('.btn-settings').addEventListener('click', openSettings);
+        patchNotesButton.addEventListener('click', () => {
+            patchNotesScreen.classList.add('is-visible');
+            patchNotesScreen.setAttribute('aria-hidden', 'false');
+        });
+        patchNotesCloseButton.addEventListener('click', () => {
+            patchNotesScreen.classList.remove('is-visible');
+            patchNotesScreen.setAttribute('aria-hidden', 'true');
+        });
         rollVolumeButton.addEventListener('click', rollVolumeDice);
         document.querySelector('.settings-close').addEventListener('click', () => {
             settingsScreen.classList.remove('is-visible');

@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <button class="patch-notes-button" type="button" aria-haspopup="dialog">PATCH NOTES</button>
+
     <!-- Wolken -->
     <div class="cloud cloud1"></div>
     <div class="cloud cloud2"></div>
@@ -56,6 +58,34 @@
                 <button class="roll-volume-button" type="button">ROLL</button>
                 <button class="settings-close" type="button">ZURÜCK</button>
             </div>
+        </div>
+    </div>
+
+    <div class="patch-notes-screen" role="dialog" aria-modal="true" aria-labelledby="patch-notes-title" aria-hidden="true">
+        <div class="patch-notes-box">
+            <h2 class="patch-notes-title" id="patch-notes-title">PATCH NOTES</h2>
+            <article class="patch-entry">
+                <h3>Version 0.0.1</h3>
+                <p class="patch-date">Kampf- und Balance-Update</p>
+                <ul>
+                    <li>Auto Battle hinzugefügt: Dein Pokémon kämpft automatisch und wählt selbstständig Attacken.</li>
+                    <li>Dodge-Chance ergänzt: Sie entspricht dem Level und ist grundsätzlich auf 10% begrenzt.</li>
+                    <li>Kritische Treffer ergänzt: Die Krit-Chance steigt mit dem Level; kritische Treffer können nicht gedodged werden.</li>
+                    <li>Typfähigkeiten eingeführt:
+                        <ul>
+                            <li><strong>Stun Spore (Pflanze):</strong> 75% Paralyse-Chance; ansonsten 50% Tackle-Schaden.</li>
+                            <li><strong>Burn (Feuer):</strong> 20% des Blazing-Destruction-Schadens pro Runde für 5 Runden und nicht dodgebar.</li>
+                            <li><strong>Muddy Water (Wasser):</strong> Erhöht die eigene Dodge-Rate für 3 Runden auf 25%.</li>
+                        </ul>
+                    </li>
+                    <li>Paralyse ergänzt: Ein paralysiertes Pokémon hat bei jedem Angriff eine 25% Chance, dass die Attacke ausfällt.</li>
+                    <li>Die neuen Fähigkeiten verwenden den jeweiligen Pokémon-Typ und damit die Typ-Multiplikatoren.</li>
+                    <li>HP-Anzeigen, Dodge-/Krit-Chancen und Effektmeldungen im Kampf ergänzt.</li>
+                    <li>Attacken-Tooltips zeigen jetzt Wirkung, Krit-Fähigkeit und Status-Effekte an.</li>
+                    <li>Attacken- und Effektmeldungen wurden verlängert, damit sie besser lesbar sind.</li>
+                </ul>
+            </article>
+            <button class="patch-notes-close" type="button">ZURÜCK</button>
         </div>
     </div>
 
