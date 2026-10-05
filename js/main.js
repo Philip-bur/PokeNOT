@@ -1,20 +1,5 @@
-const pokemonPool = {
-            Feuer: ['Cyndabeer', 'Charchim', 'Charman'],
-            Wasser: ['Ottatron', 'Schiggurt', 'gorF'],
-            Pflanze: ['Boolbiesore', 'Felorp', 'Baozi']
-        };
-
-        const pokemonImages = {
-            Cyndabeer: 'resources/images/Cyndabeer.png',
-            Charchim: 'resources/images/Charchim.png',
-            Charman: 'resources/images/Charman.png',
-            Ottatron: 'resources/images/Ottatron.png',
-            Schiggurt: 'resources/images/Schiggurt.png',
-            gorF: 'resources/images/Gorf.png',
-            Boolbiesore: 'resources/images/Boolbiesore.png',
-            Felorp: 'resources/images/Felorp.png',
-            Baozi: 'resources/images/Baozi.png'
-        };
+        let pokemonPool = {};
+        let pokemonImages = {};
 
         const pokemonSelection = document.querySelector('.pokemon-selection');
         const pokemonOptions = document.querySelector('.pokemon-options');
@@ -84,6 +69,29 @@ const pokemonPool = {
         const volumeStorageKey = 'pokenot-volume';
         const volumeDiceStorageKey = 'pokenot-volume-dice';
         const volumeDice = Array.from({ length: 10 }, () => 1);
+
+        async function loadPokemonData() {
+            const response = await fetch('data/pokemon.json');
+            if (!response.ok) {
+                throw new Error(`Pokémon-Daten konnten nicht geladen werden (${response.status}).`);
+            }
+
+            const data = await response.json();
+            if (!Array.isArray(data.pokemon) || data.pokemon.length === 0) {
+                throw new Error('Die Pokémon-JSON enthält keine gültigen Pokémon.');
+            }
+
+            pokemonPool = {};
+            pokemonImages = {};
+            data.pokemon.forEach(({ name, type, image }) => {
+                if (!name || !type || !image) {
+                    throw new Error('Ein Pokémon in der JSON enthält unvollständige Daten.');
+                }
+                if (!pokemonPool[type]) pokemonPool[type] = [];
+                pokemonPool[type].push(name);
+                pokemonImages[name] = image;
+            });
+        }
 
         function getSpecialAttack(type) {
             return {
@@ -658,11 +666,23 @@ const pokemonPool = {
             window.setTimeout(() => resolvePlayerAttack(attack), battleMessageDelay);
         }
 
-        function showPokemonSelection() {
+        async function showPokemonSelection() {
+            try {
+                await pokemonDataPromise;
+            } catch (error) {
+                battleStatus.textContent = 'Die Pokémon-Daten konnten nicht geladen werden.';
+                console.error(error);
+                return;
+            }
             battleScreen.classList.remove('is-visible');
             rollPokemonOptions();
             pokemonSelection.classList.add('is-visible');
         }
+
+        const pokemonDataPromise = loadPokemonData().catch((error) => {
+            console.error(error);
+            throw error;
+        });
 
         document.querySelector('.btn-start').addEventListener('click', showPokemonSelection);
         renderHighscores();

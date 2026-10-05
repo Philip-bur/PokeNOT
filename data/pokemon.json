@@ -1,0 +1,13 @@
+{
+    "pokemon": [
+        { "name": "Cyndabeer", "type": "Feuer", "image": "resources/images/Cyndabeer.png" },
+        { "name": "Charchim", "type": "Feuer", "image": "resources/images/Charchim.png" },
+        { "name": "Charman", "type": "Feuer", "image": "resources/images/Charman.png" },
+        { "name": "Ottatron", "type": "Wasser", "image": "resources/images/Ottatron.png" },
+        { "name": "Schiggurt", "type": "Wasser", "image": "resources/images/Schiggurt.png" },
+        { "name": "gorF", "type": "Wasser", "image": "resources/images/Gorf.png" },
+        { "name": "Boolbiesore", "type": "Pflanze", "image": "resources/images/Boolbiesore.png" },
+        { "name": "Felorp", "type": "Pflanze", "image": "resources/images/Felorp.png" },
+        { "name": "Baozi", "type": "Pflanze", "image": "resources/images/Baozi.png" }
+    ]
+}
