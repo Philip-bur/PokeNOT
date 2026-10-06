@@ -185,6 +185,68 @@
             z-index: 40;
         }
 
+        .easter-egg-screen {
+            display: none;
+            position: fixed;
+            inset: 0;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: rgba(44, 62, 80, 0.78);
+            z-index: 80;
+        }
+
+        .easter-egg-screen.is-visible {
+            display: flex;
+        }
+
+        .easter-egg-box {
+            width: min(560px, 100%);
+            padding: 30px;
+            border: 5px solid #2C3E50;
+            border-radius: 20px;
+            background: #F5E6D3;
+            color: #2C3E50;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+        }
+
+        .easter-egg-title {
+            margin-bottom: 18px;
+            color: #C0392B;
+        }
+
+        .easter-egg-box p {
+            margin: 10px 0;
+            line-height: 1.45;
+        }
+
+        .easter-egg-entry {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .easter-egg-name-input {
+            width: 190px;
+            padding: 10px;
+            border: 2px solid #2C3E50;
+            border-radius: 8px;
+            font: inherit;
+        }
+
+        .easter-egg-confirm-button {
+            padding: 10px 16px;
+            border: 2px solid #2C3E50;
+            border-radius: 8px;
+            background: #E67E22;
+            color: white;
+            font: inherit;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
         .inventory-screen.is-visible {
             display: flex;
         }

@@ -43,6 +43,9 @@
         const highscoreEntry = document.querySelector('.highscore-entry');
         const highscoreNameInput = document.querySelector('.highscore-name-input');
         const highscoreConfirmButton = document.querySelector('.highscore-confirm-button');
+        const easterEggScreen = document.querySelector('.easter-egg-screen');
+        const easterEggNameInput = document.querySelector('.easter-egg-name-input');
+        const easterEggConfirmButton = document.querySelector('.easter-egg-confirm-button');
         const autoBattleButton = document.querySelector('.auto-battle-button');
         const attackNames = {
             Feuer: 'Blazing Destruction',
@@ -69,6 +72,8 @@
         let healingPotionCount = 0;
         let continueAfterPotionPickup = null;
         let gameOverRecorded = false;
+        let easterEggSequenceStep = 0;
+        let easterEggCompleted = false;
         const highscoreStorageKey = 'pokenot-highscore';
         const volumeStorageKey = 'pokenot-volume';
         const volumeDiceStorageKey = 'pokenot-volume-dice';
@@ -269,6 +274,11 @@
             playerCombatant.hp = Math.min(playerCombatant.maxHp, playerCombatant.hp + healedHp);
             const actualHeal = playerCombatant.hp - previousHp;
             healingPotionCount--;
+            if (easterEggSequenceStep === 2) {
+                easterEggSequenceStep = 3;
+            } else {
+                easterEggSequenceStep = 0;
+            }
             updateHealthBars();
             updateInventoryDisplay();
             battleStatus.textContent = `Heiltrank benutzt: +${actualHeal} HP geheilt!`;
@@ -318,7 +328,7 @@
                 item.innerHTML = `
                     <span class="score-rank">${index + 1}.</span>
                     <span class="score-name"></span>
-                    <span class="score-points">LEVEL ${entry.level}</span>
+                    <span class="score-points">LEVEL ${entry.isEasterEgg ? '∞' : entry.level}</span>
                 `;
                 item.querySelector('.score-name').textContent = entry.name;
                 scoreList.appendChild(item);
@@ -358,6 +368,51 @@
 
             localStorage.removeItem(highscoreStorageKey);
             renderHighscores();
+        }
+
+        function showEasterEgg() {
+            easterEggCompleted = true;
+            easterEggScreen.classList.add('is-visible');
+            easterEggScreen.setAttribute('aria-hidden', 'false');
+            easterEggNameInput.value = '';
+            easterEggNameInput.focus();
+        }
+
+        function saveEasterEggHighscore() {
+            const name = easterEggNameInput.value.trim().slice(0, 18);
+            if (!name) return;
+
+            const highscores = [
+                ...getHighscores(),
+                { name, level: null, isEasterEgg: true }
+            ]
+                .sort((first, second) => {
+                    const firstLevel = first.isEasterEgg ? Number.POSITIVE_INFINITY : first.level;
+                    const secondLevel = second.isEasterEgg ? Number.POSITIVE_INFINITY : second.level;
+                    return secondLevel - firstLevel;
+                })
+                .slice(0, 5);
+
+            localStorage.setItem(highscoreStorageKey, JSON.stringify(highscores));
+            renderHighscores();
+            easterEggScreen.classList.remove('is-visible');
+            easterEggScreen.setAttribute('aria-hidden', 'true');
+            easterEggNameInput.value = '';
+        }
+
+        function recordEasterEggAttack(attack) {
+            const isTackle = attack.name === 'Tackle';
+            const isSpecialAttack = ['Blazing Destruction', 'Bubble', 'Leech Seed'].includes(attack.name);
+
+            if (easterEggSequenceStep === 0 && isTackle) {
+                easterEggSequenceStep = 1;
+            } else if (easterEggSequenceStep === 1 && isTackle) {
+                easterEggSequenceStep = 2;
+            } else if (easterEggSequenceStep === 3 && isSpecialAttack) {
+                easterEggSequenceStep = 4;
+            } else if (easterEggSequenceStep !== 4) {
+                easterEggSequenceStep = 0;
+            }
         }
 
         function showAttackResult(attackerName, attack, result) {
@@ -447,6 +502,8 @@
                 option.addEventListener('click', () => {
                     playerPokemon = { name: pokemonName, type, level: 1 };
                     gameOverRecorded = false;
+                    easterEggSequenceStep = 0;
+                    easterEggCompleted = false;
                     highscoreSaveButton.classList.remove('is-visible');
                     highscoreEntry.classList.remove('is-visible');
                     highscoreNameInput.value = '';
@@ -747,10 +804,14 @@
         });
 
         tackleButton.addEventListener('click', () => {
-            performPlayerAttack(getTackleAttack());
+            const attack = getTackleAttack();
+            recordEasterEggAttack(attack);
+            performPlayerAttack(attack);
         });
         specialAttackButton.addEventListener('click', () => {
-            performPlayerAttack(getSpecialAttack(playerPokemon.type));
+            const attack = getSpecialAttack(playerPokemon.type);
+            recordEasterEggAttack(attack);
+            performPlayerAttack(attack);
         });
         stunButton.addEventListener('click', performTypeAbility);
         inventoryButton.addEventListener('click', () => {
@@ -770,6 +831,7 @@
         });
         highscoreConfirmButton.addEventListener('click', saveHighscore);
         highscoreResetButton.addEventListener('click', resetHighscores);
+        easterEggConfirmButton.addEventListener('click', saveEasterEggHighscore);
         autoBattleButton.addEventListener('click', () => {
             setAutoBattleEnabled(!autoBattleEnabled);
         });
@@ -777,4 +839,7 @@
         document.querySelector('.battle-close').addEventListener('click', () => {
             setAutoBattleEnabled(false);
             battleScreen.classList.remove('is-visible');
+            if (easterEggSequenceStep === 4 && !easterEggCompleted) {
+                showEasterEgg();
+            }
         });
