@@ -63,7 +63,10 @@ function resolveAttack(
   const dodged = !critical && effect?.cannotDodge !== true && Math.random() * 100 < dodgeChance;
   const typeMultiplier = getTypeMultiplier(attackType, defender.type);
   const rollMultiplier = getRollDamageMultiplier(Math.min(roll, 100), critical);
-  const levelDamageMultiplier = 1 + ((attacker.level - 1) * 0.05);
+  const levelDamageBonus = attacker === enemy
+    ? Math.min(0.30, (attacker.level - 1) * 0.05)
+    : Math.min(0.50, (attacker.level - 1) * 0.05);
+  const levelDamageMultiplier = 1 + levelDamageBonus;
 
   const damage = Math.round(
     baseDamage *

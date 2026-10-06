@@ -13,6 +13,8 @@
         const inventoryCloseButton = document.querySelector('.inventory-close');
         const inventoryUseButton = document.querySelector('.inventory-use-button');
         const inventoryItemCount = document.querySelector('.inventory-item-count strong');
+        const potionFoundScreen = document.querySelector('.potion-found-screen');
+        const potionPickupButton = document.querySelector('.potion-pickup-button');
         const diceGrid = document.querySelector('.dice-grid');
         const volumeValue = document.querySelector('.volume-value');
         const rollVolumeButton = document.querySelector('.roll-volume-button');
@@ -32,6 +34,7 @@
         const playerCombatStats = document.querySelector('.player-combat-stats');
         const opponentCombatStats = document.querySelector('.opponent-combat-stats');
         const scoreList = document.querySelector('.score-list');
+        const highscoreResetButton = document.querySelector('.highscore-reset-button');
         const battleStatus = document.querySelector('.battle-status');
         const tackleButton = document.querySelector('.tackle-button');
         const specialAttackButton = document.querySelector('.special-attack-button');
@@ -64,6 +67,7 @@
         let isPlayerTurn = true;
         let autoBattleEnabled = false;
         let healingPotionCount = 0;
+        let continueAfterPotionPickup = null;
         let gameOverRecorded = false;
         const highscoreStorageKey = 'pokenot-highscore';
         const volumeStorageKey = 'pokenot-volume';
@@ -223,11 +227,27 @@
         }
 
         function searchForHealingPotion() {
-            if (Math.random() >= 0.05) return false;
+            if (Math.random() >= 0.10) return false;
 
+            return true;
+        }
+
+        function showPotionFound(continueCallback) {
+            continueAfterPotionPickup = continueCallback;
+            potionFoundScreen.hidden = false;
+            potionFoundScreen.classList.add('is-visible');
+            potionFoundScreen.setAttribute('aria-hidden', 'false');
+        }
+
+        function pickUpHealingPotion() {
             healingPotionCount++;
             updateInventoryDisplay();
-            return true;
+            potionFoundScreen.classList.remove('is-visible');
+            potionFoundScreen.hidden = true;
+            potionFoundScreen.setAttribute('aria-hidden', 'true');
+            const continueCallback = continueAfterPotionPickup;
+            continueAfterPotionPickup = null;
+            if (continueCallback) continueCallback();
         }
 
         function useHealingPotion() {
@@ -333,6 +353,13 @@
             highscoreNameInput.value = '';
         }
 
+        function resetHighscores() {
+            if (!window.confirm('Möchtest du wirklich alle Highscores löschen?')) return;
+
+            localStorage.removeItem(highscoreStorageKey);
+            renderHighscores();
+        }
+
         function showAttackResult(attackerName, attack, result) {
             const attackMessage = document.createElement('div');
             attackMessage.textContent = result.effectApplied === 'paralysis-failed'
@@ -346,14 +373,19 @@
                 : `${attackerName} macht ${attack.name} (-${result.damage} HP)`;
             battleStatus.replaceChildren(attackMessage);
 
-            const effectivenessMessage = document.createElement('span');
-            effectivenessMessage.className = 'attack-effectiveness';
-            effectivenessMessage.textContent = result.typeMultiplier === 1.5
-                ? '(Effektiv +50% Damage)'
-                : result.typeMultiplier === 0.8
-                    ? '(Uneffektiv -20% Damage)'
-                    : '\u00A0';
-            battleStatus.appendChild(effectivenessMessage);
+            const hasDirectDamage = attack.name !== 'Muddy Water'
+                && attack.effect?.type !== 'muddy-water'
+                && (attack.baseDamage ?? 20) > 0;
+            if (hasDirectDamage) {
+                const effectivenessMessage = document.createElement('span');
+                effectivenessMessage.className = 'attack-effectiveness';
+                effectivenessMessage.textContent = result.typeMultiplier === 1.5
+                    ? '(Effektiv +50% Damage)'
+                    : result.typeMultiplier === 0.8
+                        ? '(Uneffektiv -20% Damage)'
+                        : '\u00A0';
+                battleStatus.appendChild(effectivenessMessage);
+            }
 
             if (result.effectApplied === 'burn') {
                 battleStatus.appendChild(createEffectMessage(
@@ -588,6 +620,8 @@
                 const foundPotion = searchForHealingPotion();
                 if (foundPotion) {
                     battleStatus.textContent = 'Gegner besiegt! Du hast einen Heiltrank gefunden.';
+                    showPotionFound(() => applyNextOpponent(createNextOpponent(playerCombatant.level)));
+                    return;
                 }
                 window.setTimeout(() => applyNextOpponent(createNextOpponent(playerCombatant.level)), battleMessageDelay);
                 return;
@@ -629,6 +663,8 @@
                 battleStatus.textContent = 'Gegner besiegt! Ein neuer Gegner erscheint...';
                 if (searchForHealingPotion()) {
                     battleStatus.textContent = 'Gegner besiegt! Du hast einen Heiltrank gefunden.';
+                    showPotionFound(() => applyNextOpponent(result.nextEnemy));
+                    return;
                 }
                 window.setTimeout(() => applyNextOpponent(result.nextEnemy), battleMessageDelay);
                 return;
@@ -723,6 +759,7 @@
             inventoryScreen.setAttribute('aria-hidden', 'false');
         });
         inventoryUseButton.addEventListener('click', useHealingPotion);
+        potionPickupButton.addEventListener('click', pickUpHealingPotion);
         inventoryCloseButton.addEventListener('click', () => {
             inventoryScreen.classList.remove('is-visible');
             inventoryScreen.setAttribute('aria-hidden', 'true');
@@ -732,6 +769,7 @@
             highscoreNameInput.focus();
         });
         highscoreConfirmButton.addEventListener('click', saveHighscore);
+        highscoreResetButton.addEventListener('click', resetHighscores);
         autoBattleButton.addEventListener('click', () => {
             setAutoBattleEnabled(!autoBattleEnabled);
         });

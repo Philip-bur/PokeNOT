@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PokeNOT - Monster Battle Adventure</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=20261006-4">
 </head>
 <body>
     <button class="patch-notes-button" type="button" aria-haspopup="dialog">PATCH NOTES</button>
@@ -37,6 +37,7 @@
         <div class="high-score-box">
             <div class="score-title">HIGH SCORE</div>
             <ul class="score-list"></ul>
+            <button class="highscore-reset-button" type="button">RESET</button>
         </div>
     </div>
 
@@ -83,7 +84,7 @@
                     <li>HP-Anzeigen, Dodge-/Krit-Chancen und Effektmeldungen im Kampf ergänzt.</li>
                     <li>Attacken-Tooltips zeigen jetzt Wirkung, Krit-Fähigkeit und Status-Effekte an.</li>
                     <li>Attacken- und Effektmeldungen wurden verlängert, damit sie besser lesbar sind.</li>
-                    <li>Inventar mit Heiltränken ergänzt: Nach einem besiegten Gegner besteht eine 5% Fundchance; ein Trank heilt 20% der maximalen HP und verbraucht den Zug.</li>
+                    <li>Inventar mit Heiltränken ergänzt: Nach einem besiegten Gegner besteht eine 10% Fundchance; ein Trank heilt 20% der maximalen HP und verbraucht den Zug.</li>
                 </ul>
             </article>
             <button class="patch-notes-close" type="button">ZURÜCK</button>
@@ -105,6 +106,20 @@
                 <button class="inventory-use-button" type="button">BENUTZEN</button>
                 <button class="inventory-close" type="button">ZURÜCK</button>
             </div>
+        </div>
+    </div>
+
+    <div class="potion-found-screen" role="dialog" aria-modal="true" aria-labelledby="potion-found-title" aria-hidden="true" hidden>
+        <div class="potion-found-box">
+            <h2 class="potion-found-title" id="potion-found-title">HEILTRANK GEFUNDEN!</h2>
+            <div class="inventory-item">
+                <img class="inventory-item-image" src="resources/images/healing_pot.png" alt="Heiltrank">
+                <div class="inventory-item-details">
+                    <h3>Heiltrank</h3>
+                    <p>Heilt 20% der maximalen HP deines Pokémon.</p>
+                </div>
+            </div>
+            <button class="potion-pickup-button" type="button">AUFSAMMELN</button>
         </div>
     </div>
 
@@ -168,7 +183,7 @@
         </div>
     </div>
 
-    <script src="js/damage.js"></script>
-    <script src="js/main.js"></script>
+    <script src="js/damage.js?v=20261006-4"></script>
+    <script src="js/main.js?v=20261006-4"></script>
 </body>
 </html>
